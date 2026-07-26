@@ -61,7 +61,7 @@ Item {
                 color: Tokens.colorText
                 font.family: Tokens.fontDisplay
                 font.pixelSize: root.baseSize * 0.74
-                font.weight: Font.Light
+                font.weight: Font.Bold
                 font.letterSpacing: -4
             }
 
@@ -71,7 +71,7 @@ Item {
                 color: Tokens.colorText
                 font.family: Tokens.fontDisplay
                 font.pixelSize: root.baseSize * 0.74
-                font.weight: Font.Light
+                font.weight: Font.Bold
                 font.letterSpacing: -4
             }
         }
@@ -85,7 +85,7 @@ Item {
             color: Tokens.colorText
             font.family: Tokens.fontDisplay
             font.pixelSize: root.baseSize
-            font.weight: Font.Light
+            font.weight: Font.Bold
             font.letterSpacing: -5
         }
     }
