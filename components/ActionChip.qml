@@ -16,7 +16,7 @@ Rectangle {
         if (!root.enabled)
             return Tokens.disabled;
         if (mouse.pressed)
-            return root.destructive ? Tokens.errorPressed : Tokens.surfacePressed;
+            return root.destructive ? Tokens.errorContainerPressed : Tokens.surfacePressed;
         if (root.selected)
             return Tokens.secondaryContainer;
         return root.destructive ? Tokens.errorContainer : Tokens.surfaceContainer;
