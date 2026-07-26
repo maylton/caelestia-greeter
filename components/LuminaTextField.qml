@@ -7,6 +7,7 @@ Rectangle {
     property alias text: input.text
     property string placeholderText: ""
     property bool passwordMode: false
+    readonly property bool inputHasFocus: input.activeFocus
     signal accepted()
 
     implicitHeight: 54
@@ -14,6 +15,12 @@ Rectangle {
     color: input.activeFocus ? Tokens.colorFieldActive : Tokens.colorField
     border.width: input.activeFocus ? 2 : 1
     border.color: input.activeFocus ? Tokens.colorPrimary : Tokens.colorOutline
+
+    function focusInput(reason) {
+        input.forceActiveFocus(reason === undefined
+            ? Qt.OtherFocusReason
+            : reason);
+    }
 
     Behavior on color {
         ColorAnimation { duration: Tokens.durationShort }
@@ -27,6 +34,7 @@ Rectangle {
             verticalCenter: parent.verticalCenter
             margins: 18
         }
+        enabled: root.enabled
         color: Tokens.colorText
         selectionColor: Tokens.colorPrimaryContainer
         selectedTextColor: Tokens.colorPrimaryContainerText
