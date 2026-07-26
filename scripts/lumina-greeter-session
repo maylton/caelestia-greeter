@@ -8,5 +8,81 @@ if [[ -r /etc/locale.conf ]]; then
     set +a
 fi
 
+detect_login_user() {
+    local uid_min uid_max
+
+    uid_min="$(awk '$1 == "UID_MIN" { print $2; exit }' /etc/login.defs 2>/dev/null || true)"
+    uid_max="$(awk '$1 == "UID_MAX" { print $2; exit }' /etc/login.defs 2>/dev/null || true)"
+    uid_min="${uid_min:-1000}"
+    uid_max="${uid_max:-60000}"
+
+    getent passwd | awk -F: -v min="$uid_min" -v max="$uid_max" '
+        $3 >= min && $3 <= max
+        && $1 != "nobody"
+        && $7 !~ /(nologin|false)$/ {
+            if (best_name == "" || $3 < best_uid) {
+                best_name = $1
+                best_uid = $3
+            }
+        }
+        END {
+            if (best_name != "")
+                print best_name
+        }
+    '
+}
+
+resolve_user_profile() {
+    local user passwd_entry gecos home_dir display_name
+    local accounts_file configured_icon candidate candidate_path
+
+    user="${LUMINA_GREETER_USER:-}"
+    if [[ -z "$user" ]]; then
+        user="$(detect_login_user)"
+    fi
+
+    if [[ -z "$user" ]]; then
+        return
+    fi
+
+    export LUMINA_GREETER_USER="$user"
+
+    passwd_entry="$(getent passwd "$user" || true)"
+    if [[ -n "$passwd_entry" ]]; then
+        IFS=: read -r _ _ _ _ gecos home_dir _ <<<"$passwd_entry"
+        display_name="${gecos%%,*}"
+        display_name="${display_name:-$user}"
+        export LUMINA_GREETER_DISPLAY_NAME="${LUMINA_GREETER_DISPLAY_NAME:-$display_name}"
+    else
+        home_dir="/home/$user"
+        export LUMINA_GREETER_DISPLAY_NAME="${LUMINA_GREETER_DISPLAY_NAME:-$user}"
+    fi
+
+    if [[ -n "${LUMINA_GREETER_AVATAR:-}" ]]; then
+        return
+    fi
+
+    accounts_file="/var/lib/AccountsService/users/$user"
+    configured_icon=""
+    if [[ -r "$accounts_file" ]]; then
+        configured_icon="$(awk -F= '$1 == "Icon" { print substr($0, index($0, "=") + 1); exit }' "$accounts_file")"
+    fi
+
+    for candidate in \
+        "$configured_icon" \
+        "/var/lib/AccountsService/icons/$user" \
+        "$home_dir/.face.icon" \
+        "$home_dir/.face"; do
+        [[ -n "$candidate" ]] || continue
+        candidate_path="${candidate#file://}"
+        if [[ -f "$candidate_path" && -r "$candidate_path" ]]; then
+            export LUMINA_GREETER_AVATAR="$candidate_path"
+            break
+        fi
+    done
+}
+
+resolve_user_profile
+
 config_dir="${LUMINA_GREETER_CONFIG_DIR:-/etc/xdg/quickshell/lumina-greeter}"
 exec /usr/bin/qs -p "$config_dir"
