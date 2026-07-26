@@ -1,0 +1,16 @@
+{
+  "clockLayout": "stacked",
+  "defaultUser": "",
+  "loginStartsOpen": false,
+  "wallpaper": "assets/default-wallpaper.svg",
+  "sessions": [
+    {
+      "name": "Lumina Shell",
+      "command": ["niri-session"]
+    },
+    {
+      "name": "Niri",
+      "command": ["niri-session"]
+    }
+  ]
+}

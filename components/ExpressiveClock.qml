@@ -1,0 +1,92 @@
+import Quickshell
+import QtQuick
+import "../design"
+
+Item {
+    id: root
+
+    property string layoutMode: "stacked"
+    property real baseSize: 180
+
+    implicitWidth: content.implicitWidth
+    implicitHeight: content.implicitHeight
+
+    SystemClock {
+        id: systemClock
+        precision: SystemClock.Minutes
+    }
+
+    Column {
+        id: content
+        anchors.centerIn: parent
+        spacing: 16
+
+        Loader {
+            anchors.horizontalCenter: parent.horizontalCenter
+            sourceComponent: root.layoutMode === "horizontal"
+                ? horizontalClock
+                : stackedClock
+        }
+
+        Rectangle {
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: dateLabel.implicitWidth + 34
+            height: 42
+            radius: height / 2
+            color: Tokens.surfaceContainer
+            border.color: Tokens.outline
+
+            Text {
+                id: dateLabel
+                anchors.centerIn: parent
+                text: Qt.formatDate(systemClock.date, "dddd, d 'de' MMMM")
+                color: Tokens.onSurface
+                font.family: Tokens.fontFamily
+                font.pixelSize: 16
+                font.weight: Font.DemiBold
+                font.capitalization: Font.Capitalize
+            }
+        }
+    }
+
+    Component {
+        id: stackedClock
+
+        Column {
+            spacing: -Math.round(root.baseSize * 0.18)
+
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: Qt.formatTime(systemClock.date, "HH")
+                color: Tokens.onSurface
+                font.family: Tokens.displayFontFamily
+                font.pixelSize: root.baseSize * 0.74
+                font.weight: Font.Light
+                font.letterSpacing: -4
+            }
+
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: Qt.formatTime(systemClock.date, "mm")
+                color: Tokens.onSurface
+                font.family: Tokens.displayFontFamily
+                font.pixelSize: root.baseSize * 0.74
+                font.weight: Font.Light
+                font.letterSpacing: -4
+            }
+        }
+    }
+
+    Component {
+        id: horizontalClock
+
+        Text {
+            text: Qt.formatTime(systemClock.date, "HH:mm")
+            color: Tokens.onSurface
+            font.family: Tokens.displayFontFamily
+            font.pixelSize: root.baseSize
+            font.weight: Font.Light
+            font.letterSpacing: -5
+        }
+    }
+}
