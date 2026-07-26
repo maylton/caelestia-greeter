@@ -10,6 +10,8 @@ The interface takes visual cues from Material Expressive and the centered Pixel 
 - Two clock layouts: stacked (`HH` above `mm`) and horizontal (`HH:mm`).
 - Runtime clock-layout toggle.
 - JSON and environment-variable configuration.
+- Automatic local-user, display-name and avatar detection.
+- Login surface open by default with the password field focused.
 - System-locale detection with English fallback.
 - Brazilian Portuguese and English translation catalogs.
 - Locale-aware date formatting.
@@ -37,14 +39,16 @@ cd lumina-greeter
 ./scripts/run-preview.sh
 ```
 
-The preview automatically simulates a successful authentication and never starts a desktop session.
+The preview automatically simulates a successful authentication, uses the current local user's profile when available and never starts a desktop session.
 
-You can launch a specific clock layout or language:
+You can launch a specific clock layout, language or profile:
 
 ```bash
 LUMINA_GREETER_CLOCK_LAYOUT=horizontal ./scripts/run-preview.sh
 LUMINA_GREETER_LANGUAGE=pt-BR ./scripts/run-preview.sh
 LUMINA_GREETER_LANGUAGE=en ./scripts/run-preview.sh
+LUMINA_GREETER_USER=maylton ./scripts/run-preview.sh
+LUMINA_GREETER_AVATAR=/absolute/path/to/avatar.png ./scripts/run-preview.sh
 ```
 
 Use `stacked` for the two-line clock. The language value `system` detects `LC_ALL`, `LC_MESSAGES`, `LANG` and the Qt system locale, in that order. Unsupported languages and missing translation keys fall back to English.
@@ -57,8 +61,10 @@ Edit `config/defaults.json`:
 {
   "clockLayout": "stacked",
   "defaultUser": "",
+  "displayName": "",
+  "avatar": "",
   "language": "system",
-  "loginStartsOpen": false,
+  "loginStartsOpen": true,
   "wallpaper": "assets/default-wallpaper.svg",
   "sessions": [
     {
@@ -69,11 +75,15 @@ Edit `config/defaults.json`:
 }
 ```
 
+When `defaultUser`, `displayName` and `avatar` are empty, the installed greetd launcher detects the first regular local account. It reads the display name from the passwd GECOS field and looks for an avatar in AccountsService, `.face.icon` and `.face`, in that order. Environment overrides always take priority.
+
 Supported environment overrides:
 
 - `LUMINA_GREETER_CLOCK_LAYOUT=stacked|horizontal`
 - `LUMINA_GREETER_LANGUAGE=system|en|pt-BR`
 - `LUMINA_GREETER_USER=<username>`
+- `LUMINA_GREETER_DISPLAY_NAME=<name>`
+- `LUMINA_GREETER_AVATAR=/absolute/path/to/image`
 - `LUMINA_GREETER_WALLPAPER=/absolute/path/to/image`
 - `LUMINA_GREETER_PREVIEW=1`
 
@@ -107,7 +117,6 @@ The session commands in `config/defaults.json` are examples and must match the c
 ## Roadmap
 
 - Discover Wayland sessions from desktop files.
-- Enumerate local users and avatars.
 - Read Lumina Shell wallpaper and dynamic color state.
 - Add keyboard layout, accessibility and network controls.
 - Add a language selector to the configuration UI.
