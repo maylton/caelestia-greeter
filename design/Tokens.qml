@@ -28,7 +28,7 @@ QtObject {
 
     readonly property color error: "#ffb4ab"
     readonly property color errorContainer: "#bb5a1b25"
-    readonly property color errorPressed: "#d46b2833"
+    readonly property color errorContainerPressed: "#d46b2833"
     readonly property color errorOutline: "#80ffb4ab"
     readonly property color onErrorContainer: "#ffe9e6"
 
