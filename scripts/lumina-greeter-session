@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+if [[ -r /etc/locale.conf ]]; then
+    set -a
+    # shellcheck disable=SC1091
+    source /etc/locale.conf
+    set +a
+fi
+
 config_dir="${LUMINA_GREETER_CONFIG_DIR:-/etc/xdg/quickshell/lumina-greeter}"
-exec qs -p "$config_dir"
+exec /usr/bin/qs -p "$config_dir"
