@@ -17,9 +17,9 @@ detect_login_user() {
     uid_max="${uid_max:-60000}"
 
     getent passwd | awk -F: -v min="$uid_min" -v max="$uid_max" '
-        $3 >= min && $3 <= max
-        && $1 != "nobody"
-        && $7 !~ /(nologin|false)$/ {
+        ($3 >= min && $3 <= max
+            && $1 != "nobody"
+            && $7 !~ /(nologin|false)$/) {
             if (best_name == "" || $3 < best_uid) {
                 best_name = $1
                 best_uid = $3
