@@ -14,15 +14,15 @@ Rectangle {
     radius: height / 2
     color: {
         if (!root.enabled)
-            return Tokens.disabled;
+            return Tokens.colorDisabled;
         if (mouse.pressed)
-            return root.destructive ? Tokens.errorContainerPressed : Tokens.surfacePressed;
+            return root.destructive ? Tokens.colorErrorContainerPressed : Tokens.colorSurfacePressed;
         if (root.selected)
-            return Tokens.secondaryContainer;
-        return root.destructive ? Tokens.errorContainer : Tokens.surfaceContainer;
+            return Tokens.colorSecondaryContainer;
+        return root.destructive ? Tokens.colorErrorContainer : Tokens.colorSurfaceContainer;
     }
     border.width: root.selected ? 0 : 1
-    border.color: root.destructive ? Tokens.errorOutline : Tokens.outline
+    border.color: root.destructive ? Tokens.colorErrorOutline : Tokens.colorOutline
     opacity: root.enabled ? 1 : 0.55
 
     Text {
@@ -31,10 +31,10 @@ Rectangle {
         text: root.text
         color: {
             if (root.destructive)
-                return Tokens.onErrorContainer;
-            return root.selected ? Tokens.onSecondaryContainer : Tokens.onSurface;
+                return Tokens.colorErrorContainerText;
+            return root.selected ? Tokens.colorSecondaryContainerText : Tokens.colorText;
         }
-        font.family: Tokens.fontFamily
+        font.family: Tokens.fontBody
         font.pixelSize: 13
         font.weight: Font.DemiBold
     }
