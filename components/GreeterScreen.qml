@@ -113,12 +113,14 @@ PanelWindow {
             opacity: window.loginOpen ? 1 : 0
             scale: window.loginOpen ? 1 : 0.94
             enabled: window.loginOpen
+            active: window.loginOpen
             defaultUser: Config.defaultUser
             sessions: Config.sessions
 
             onCloseRequested: {
                 AuthService.cancel();
                 window.loginOpen = false;
+                scene.forceActiveFocus();
             }
 
             Behavior on opacity {

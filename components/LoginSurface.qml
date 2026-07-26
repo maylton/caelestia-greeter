@@ -7,6 +7,7 @@ Rectangle {
 
     property string defaultUser: ""
     property var sessions: []
+    property bool active: true
     property int selectedSessionIndex: 0
     readonly property var selectedSession: sessions.length > 0
         ? sessions[Math.min(selectedSessionIndex, sessions.length - 1)]
@@ -20,13 +21,19 @@ Rectangle {
     border.width: 1
     border.color: Tokens.outline
 
-    Component.onCompleted: {
+    function focusInitialField() {
+        if (!root.active)
+            return;
+
         usernameField.text = root.defaultUser;
         if (root.defaultUser.length > 0)
             passwordField.forceActiveFocus();
         else
             usernameField.forceActiveFocus();
     }
+
+    Component.onCompleted: root.focusInitialField()
+    onActiveChanged: root.focusInitialField()
 
     function submit() {
         if (AuthService.awaitingResponse) {
