@@ -3,12 +3,13 @@ pragma Singleton
 import Quickshell
 import Quickshell.Services.Greetd
 import QtQuick
+import "../i18n"
 
 Singleton {
     id: root
 
     property string username: ""
-    property string prompt: qsTr("Senha")
+    property string prompt: I18n.t("login.password")
     property string errorMessage: ""
     property string statusMessage: ""
     property string pendingResponse: ""
@@ -25,11 +26,11 @@ Singleton {
     function authenticate(user, response, command) {
         const normalizedUser = user.trim();
         if (normalizedUser.length === 0) {
-            root.errorMessage = qsTr("Digite o nome de usuário.");
+            root.errorMessage = I18n.t("auth.usernameRequired");
             return;
         }
         if (!command || command.length === 0) {
-            root.errorMessage = qsTr("A sessão selecionada não possui um comando válido.");
+            root.errorMessage = I18n.t("auth.invalidSession");
             return;
         }
 
@@ -37,7 +38,7 @@ Singleton {
         root.pendingResponse = response;
         root.launchCommand = command;
         root.errorMessage = "";
-        root.statusMessage = qsTr("Autenticando…");
+        root.statusMessage = I18n.t("auth.authenticating");
         root.awaitingResponse = false;
         root.busy = true;
 
@@ -54,7 +55,7 @@ Singleton {
             return;
 
         root.errorMessage = "";
-        root.statusMessage = qsTr("Autenticando…");
+        root.statusMessage = I18n.t("auth.authenticating");
         root.awaitingResponse = false;
         root.busy = true;
         Greetd.respond(response);
@@ -77,7 +78,7 @@ Singleton {
         repeat: false
         onTriggered: {
             root.busy = false;
-            root.statusMessage = qsTr("Autenticação simulada com sucesso.");
+            root.statusMessage = I18n.t("auth.previewSuccess");
         }
     }
 
@@ -85,7 +86,9 @@ Singleton {
         target: Greetd
 
         function onAuthMessage(message, error, responseRequired, echoResponse) {
-            root.prompt = message && message.length > 0 ? message : qsTr("Senha");
+            root.prompt = message && message.length > 0
+                ? message
+                : I18n.t("login.password");
             root.echoResponse = echoResponse;
 
             if (error) {
@@ -117,16 +120,16 @@ Singleton {
             root.statusMessage = "";
             root.errorMessage = message && message.length > 0
                 ? message
-                : qsTr("Não foi possível autenticar. Verifique a senha.");
+                : I18n.t("auth.failed");
         }
 
         function onReadyToLaunch() {
-            root.statusMessage = qsTr("Iniciando sessão…");
+            root.statusMessage = I18n.t("auth.startingSession");
             if (root.launchCommand.length > 0)
                 Greetd.launch(root.launchCommand);
             else {
                 root.busy = false;
-                root.errorMessage = qsTr("Nenhum comando de sessão foi configurado.");
+                root.errorMessage = I18n.t("auth.missingCommand");
             }
         }
 
