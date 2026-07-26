@@ -1,11 +1,17 @@
 // Minimal Niri session used only to host Lumina Greeter.
 spawn-at-startup "/usr/bin/lumina-greeter-session"
-hotkey-overlay { skip-at-startup }
+
+hotkey-overlay {
+    skip-at-startup
+}
+
 prefer-no-csd
 
 input {
     keyboard {
-        xkb { layout "br" }
+        xkb {
+            layout "br"
+        }
     }
 }
 
