@@ -33,15 +33,15 @@ Item {
             width: dateLabel.implicitWidth + 34
             height: 42
             radius: height / 2
-            color: Tokens.surfaceContainer
-            border.color: Tokens.outline
+            color: Tokens.colorSurfaceContainer
+            border.color: Tokens.colorOutline
 
             Text {
                 id: dateLabel
                 anchors.centerIn: parent
                 text: Qt.formatDate(systemClock.date, "dddd, d 'de' MMMM")
-                color: Tokens.onSurface
-                font.family: Tokens.fontFamily
+                color: Tokens.colorText
+                font.family: Tokens.fontBody
                 font.pixelSize: 16
                 font.weight: Font.DemiBold
                 font.capitalization: Font.Capitalize
@@ -58,8 +58,8 @@ Item {
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: Qt.formatTime(systemClock.date, "HH")
-                color: Tokens.onSurface
-                font.family: Tokens.displayFontFamily
+                color: Tokens.colorText
+                font.family: Tokens.fontDisplay
                 font.pixelSize: root.baseSize * 0.74
                 font.weight: Font.Light
                 font.letterSpacing: -4
@@ -68,8 +68,8 @@ Item {
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: Qt.formatTime(systemClock.date, "mm")
-                color: Tokens.onSurface
-                font.family: Tokens.displayFontFamily
+                color: Tokens.colorText
+                font.family: Tokens.fontDisplay
                 font.pixelSize: root.baseSize * 0.74
                 font.weight: Font.Light
                 font.letterSpacing: -4
@@ -82,8 +82,8 @@ Item {
 
         Text {
             text: Qt.formatTime(systemClock.date, "HH:mm")
-            color: Tokens.onSurface
-            font.family: Tokens.displayFontFamily
+            color: Tokens.colorText
+            font.family: Tokens.fontDisplay
             font.pixelSize: root.baseSize
             font.weight: Font.Light
             font.letterSpacing: -5
