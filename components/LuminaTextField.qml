@@ -11,12 +11,12 @@ Rectangle {
 
     implicitHeight: 54
     radius: 18
-    color: input.activeFocus ? Tokens.fieldActive : Tokens.field
+    color: input.activeFocus ? Tokens.colorFieldActive : Tokens.colorField
     border.width: input.activeFocus ? 2 : 1
-    border.color: input.activeFocus ? Tokens.primary : Tokens.outline
+    border.color: input.activeFocus ? Tokens.colorPrimary : Tokens.colorOutline
 
     Behavior on color {
-        ColorAnimation { duration: Tokens.motionShort }
+        ColorAnimation { duration: Tokens.durationShort }
     }
 
     TextInput {
@@ -27,10 +27,10 @@ Rectangle {
             verticalCenter: parent.verticalCenter
             margins: 18
         }
-        color: Tokens.onSurface
-        selectionColor: Tokens.primaryContainer
-        selectedTextColor: Tokens.onPrimaryContainer
-        font.family: Tokens.fontFamily
+        color: Tokens.colorText
+        selectionColor: Tokens.colorPrimaryContainer
+        selectedTextColor: Tokens.colorPrimaryContainerText
+        font.family: Tokens.fontBody
         font.pixelSize: 15
         echoMode: root.passwordMode ? TextInput.Password : TextInput.Normal
         passwordCharacter: "●"
@@ -45,8 +45,8 @@ Rectangle {
         }
         visible: input.text.length === 0 && !input.activeFocus
         text: root.placeholderText
-        color: Tokens.onSurfaceMuted
-        font.family: Tokens.fontFamily
+        color: Tokens.colorTextMuted
+        font.family: Tokens.fontBody
         font.pixelSize: 15
     }
 }
