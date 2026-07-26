@@ -116,6 +116,8 @@ PanelWindow {
             enabled: window.loginOpen
             active: window.loginOpen
             defaultUser: Config.defaultUser
+            displayName: Config.displayName
+            avatarSource: Config.avatarSource
             sessions: Config.sessions
 
             onCloseRequested: {
