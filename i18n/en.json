@@ -1,0 +1,39 @@
+{
+  "date": {
+    "pattern": "dddd, MMMM d"
+  },
+  "idle": {
+    "prompt": "Click or press a key to sign in"
+  },
+  "clock": {
+    "stacked": "Clock: stacked",
+    "horizontal": "Clock: horizontal"
+  },
+  "power": {
+    "restart": "Restart",
+    "powerOff": "Power off"
+  },
+  "preview": {
+    "badge": "Preview mode",
+    "description": "Local preview — no session will be started"
+  },
+  "login": {
+    "welcome": "Welcome to Lumina",
+    "subtitle": "Sign in to start your session",
+    "username": "Username",
+    "password": "Password",
+    "session": "Session",
+    "back": "Back",
+    "signIn": "Sign in",
+    "signingIn": "Signing in…"
+  },
+  "auth": {
+    "usernameRequired": "Enter your username.",
+    "invalidSession": "The selected session does not have a valid command.",
+    "authenticating": "Authenticating…",
+    "previewSuccess": "Authentication successfully simulated.",
+    "failed": "Could not authenticate. Check your password.",
+    "startingSession": "Starting session…",
+    "missingCommand": "No session command is configured."
+  }
+}

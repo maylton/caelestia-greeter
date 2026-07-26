@@ -1,5 +1,6 @@
 import QtQuick
 import "../design/Tokens.js" as Tokens
+import "../i18n"
 import "../services"
 
 Rectangle {
@@ -11,7 +12,7 @@ Rectangle {
     property int selectedSessionIndex: 0
     readonly property var selectedSession: sessions.length > 0
         ? sessions[Math.min(selectedSessionIndex, sessions.length - 1)]
-        : ({ "name": qsTr("Sessão"), "command": [] })
+        : ({ "name": I18n.t("login.session"), "command": [] })
 
     signal closeRequested()
 
@@ -93,7 +94,7 @@ Rectangle {
                 spacing: 2
 
                 Text {
-                    text: qsTr("Bem-vindo ao Lumina")
+                    text: I18n.t("login.welcome")
                     color: Tokens.colorText
                     font.family: Tokens.fontDisplay
                     font.pixelSize: 22
@@ -102,8 +103,8 @@ Rectangle {
 
                 Text {
                     text: AuthService.previewMode
-                        ? qsTr("Demonstração local — nenhuma sessão será iniciada")
-                        : qsTr("Entre para iniciar sua sessão")
+                        ? I18n.t("preview.description")
+                        : I18n.t("login.subtitle")
                     color: Tokens.colorTextMuted
                     font.family: Tokens.fontBody
                     font.pixelSize: 13
@@ -114,7 +115,7 @@ Rectangle {
         LuminaTextField {
             id: usernameField
             width: parent.width
-            placeholderText: qsTr("Nome de usuário")
+            placeholderText: I18n.t("login.username")
             enabled: !AuthService.busy && !AuthService.awaitingResponse
             onAccepted: passwordField.forceActiveFocus()
         }
@@ -124,7 +125,7 @@ Rectangle {
             width: parent.width
             placeholderText: AuthService.prompt.length > 0
                 ? AuthService.prompt
-                : qsTr("Senha")
+                : I18n.t("login.password")
             passwordMode: !AuthService.echoResponse
             enabled: !AuthService.busy
             onAccepted: root.submit()
@@ -135,7 +136,7 @@ Rectangle {
             spacing: 9
 
             Text {
-                text: qsTr("Sessão")
+                text: I18n.t("login.session")
                 color: Tokens.colorTextMuted
                 font.family: Tokens.fontBody
                 font.pixelSize: 12
@@ -182,7 +183,7 @@ Rectangle {
             spacing: 10
 
             ActionChip {
-                text: qsTr("Voltar")
+                text: I18n.t("login.back")
                 enabled: !AuthService.busy
                 onClicked: root.closeRequested()
             }
@@ -198,7 +199,9 @@ Rectangle {
 
                 Text {
                     anchors.centerIn: parent
-                    text: AuthService.busy ? qsTr("Entrando…") : qsTr("Entrar")
+                    text: AuthService.busy
+                        ? I18n.t("login.signingIn")
+                        : I18n.t("login.signIn")
                     color: Tokens.colorPrimaryText
                     font.family: Tokens.fontBody
                     font.pixelSize: 14

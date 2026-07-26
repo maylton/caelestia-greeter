@@ -1,0 +1,39 @@
+{
+  "date": {
+    "pattern": "dddd, d 'de' MMMM"
+  },
+  "idle": {
+    "prompt": "Clique ou pressione uma tecla para entrar"
+  },
+  "clock": {
+    "stacked": "Relógio: vertical",
+    "horizontal": "Relógio: horizontal"
+  },
+  "power": {
+    "restart": "Reiniciar",
+    "powerOff": "Desligar"
+  },
+  "preview": {
+    "badge": "Modo de demonstração",
+    "description": "Demonstração local — nenhuma sessão será iniciada"
+  },
+  "login": {
+    "welcome": "Bem-vindo ao Lumina",
+    "subtitle": "Entre para iniciar sua sessão",
+    "username": "Nome de usuário",
+    "password": "Senha",
+    "session": "Sessão",
+    "back": "Voltar",
+    "signIn": "Entrar",
+    "signingIn": "Entrando…"
+  },
+  "auth": {
+    "usernameRequired": "Digite o nome de usuário.",
+    "invalidSession": "A sessão selecionada não possui um comando válido.",
+    "authenticating": "Autenticando…",
+    "previewSuccess": "Autenticação simulada com sucesso.",
+    "failed": "Não foi possível autenticar. Verifique a senha.",
+    "startingSession": "Iniciando sessão…",
+    "missingCommand": "Nenhum comando de sessão foi configurado."
+  }
+}

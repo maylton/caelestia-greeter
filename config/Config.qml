@@ -37,6 +37,11 @@ Singleton {
         return override.length > 0 ? override : (values.defaultUser || "");
     }
 
+    readonly property string language: {
+        const override = Quickshell.env("LUMINA_GREETER_LANGUAGE") || "";
+        return override.length > 0 ? override : (values.language || "system");
+    }
+
     readonly property bool loginStartsOpen: values.loginStartsOpen === true
 
     readonly property var sessions: {
