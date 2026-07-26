@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell.Widgets
 import "../design/Tokens.js" as Tokens
 import "../i18n"
 import "../services"
@@ -7,12 +8,17 @@ Rectangle {
     id: root
 
     property string defaultUser: ""
+    property string displayName: ""
+    property string avatarSource: ""
     property var sessions: []
     property bool active: true
     property int selectedSessionIndex: 0
     readonly property var selectedSession: sessions.length > 0
         ? sessions[Math.min(selectedSessionIndex, sessions.length - 1)]
         : ({ "name": I18n.t("login.session"), "command": [] })
+    readonly property string profileLabel: displayName.length > 0
+        ? displayName
+        : defaultUser
 
     signal closeRequested()
 
@@ -23,18 +29,32 @@ Rectangle {
     border.color: Tokens.colorOutline
 
     function focusInitialField() {
+        usernameField.text = root.defaultUser;
+        initialFocusTimer.stop();
+        if (root.active)
+            initialFocusTimer.start();
+    }
+
+    function applyInitialFocus() {
         if (!root.active)
             return;
 
-        usernameField.text = root.defaultUser;
         if (root.defaultUser.length > 0)
-            passwordField.forceActiveFocus();
+            passwordField.forceActiveFocus(Qt.ActiveWindowFocusReason);
         else
-            usernameField.forceActiveFocus();
+            usernameField.forceActiveFocus(Qt.ActiveWindowFocusReason);
     }
 
     Component.onCompleted: root.focusInitialField()
     onActiveChanged: root.focusInitialField()
+    onDefaultUserChanged: root.focusInitialField()
+
+    Timer {
+        id: initialFocusTimer
+        interval: 60
+        repeat: false
+        onTriggered: root.applyInitialFocus()
+    }
 
     function submit() {
         if (AuthService.awaitingResponse) {
@@ -53,7 +73,7 @@ Rectangle {
 
         function onAwaitingResponseChanged() {
             if (AuthService.awaitingResponse)
-                passwordField.forceActiveFocus();
+                passwordField.forceActiveFocus(Qt.ActiveWindowFocusReason);
         }
     }
 
@@ -71,41 +91,66 @@ Rectangle {
             width: parent.width
             spacing: 16
 
-            Rectangle {
-                width: 54
-                height: 54
-                radius: 20
+            ClippingRectangle {
+                id: avatarFrame
+                width: 64
+                height: 64
+                radius: 22
                 color: Tokens.colorPrimaryContainer
+                border.width: 1
+                border.color: Tokens.colorOutline
+
+                Image {
+                    id: avatarImage
+                    anchors.fill: parent
+                    source: root.avatarSource
+                    fillMode: Image.PreserveAspectCrop
+                    sourceSize.width: width
+                    sourceSize.height: height
+                    asynchronous: false
+                    cache: true
+                    visible: status === Image.Ready
+                }
 
                 Text {
                     anchors.centerIn: parent
-                    text: usernameField.text.length > 0
-                        ? usernameField.text.charAt(0).toUpperCase()
+                    visible: avatarImage.status !== Image.Ready
+                    text: root.profileLabel.length > 0
+                        ? root.profileLabel.charAt(0).toUpperCase()
                         : "L"
                     color: Tokens.colorPrimaryContainerText
                     font.family: Tokens.fontDisplay
-                    font.pixelSize: 24
+                    font.pixelSize: 26
                     font.weight: Font.DemiBold
                 }
             }
 
             Column {
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 2
+                width: parent.width - avatarFrame.width - parent.spacing
+                spacing: 3
 
                 Text {
-                    text: I18n.t("login.welcome")
+                    width: parent.width
+                    text: root.profileLabel.length > 0
+                        ? root.profileLabel
+                        : I18n.t("login.welcome")
                     color: Tokens.colorText
+                    elide: Text.ElideRight
                     font.family: Tokens.fontDisplay
                     font.pixelSize: 22
                     font.weight: Font.DemiBold
                 }
 
                 Text {
-                    text: AuthService.previewMode
-                        ? I18n.t("preview.description")
-                        : I18n.t("login.subtitle")
+                    width: parent.width
+                    text: root.defaultUser.length > 0
+                        ? root.defaultUser
+                        : (AuthService.previewMode
+                            ? I18n.t("preview.description")
+                            : I18n.t("login.subtitle"))
                     color: Tokens.colorTextMuted
+                    elide: Text.ElideRight
                     font.family: Tokens.fontBody
                     font.pixelSize: 13
                 }
@@ -115,9 +160,10 @@ Rectangle {
         LuminaTextField {
             id: usernameField
             width: parent.width
+            visible: root.defaultUser.length === 0
             placeholderText: I18n.t("login.username")
-            enabled: !AuthService.busy && !AuthService.awaitingResponse
-            onAccepted: passwordField.forceActiveFocus()
+            enabled: visible && !AuthService.busy && !AuthService.awaitingResponse
+            onAccepted: passwordField.forceActiveFocus(Qt.TabFocusReason)
         }
 
         LuminaTextField {
