@@ -40,9 +40,9 @@ Rectangle {
             return;
 
         if (root.defaultUser.length > 0)
-            passwordField.forceActiveFocus(Qt.ActiveWindowFocusReason);
+            passwordField.focusInput(Qt.ActiveWindowFocusReason);
         else
-            usernameField.forceActiveFocus(Qt.ActiveWindowFocusReason);
+            usernameField.focusInput(Qt.ActiveWindowFocusReason);
     }
 
     Component.onCompleted: root.focusInitialField()
@@ -73,7 +73,7 @@ Rectangle {
 
         function onAwaitingResponseChanged() {
             if (AuthService.awaitingResponse)
-                passwordField.forceActiveFocus(Qt.ActiveWindowFocusReason);
+                passwordField.focusInput(Qt.ActiveWindowFocusReason);
         }
     }
 
@@ -163,7 +163,7 @@ Rectangle {
             visible: root.defaultUser.length === 0
             placeholderText: I18n.t("login.username")
             enabled: visible && !AuthService.busy && !AuthService.awaitingResponse
-            onAccepted: passwordField.forceActiveFocus(Qt.TabFocusReason)
+            onAccepted: passwordField.focusInput(Qt.TabFocusReason)
         }
 
         LuminaTextField {
