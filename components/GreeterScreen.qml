@@ -2,7 +2,7 @@ import Quickshell
 import Quickshell.Wayland
 import QtQuick
 import "../config"
-import "../design"
+import "../design/Tokens.js" as Tokens
 import "../services"
 
 PanelWindow {
