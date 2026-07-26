@@ -3,6 +3,7 @@ import Quickshell.Wayland
 import QtQuick
 import "../config"
 import "../design/Tokens.js" as Tokens
+import "../i18n"
 import "../services"
 
 PanelWindow {
@@ -141,7 +142,7 @@ PanelWindow {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
             anchors.bottomMargin: 48
-            text: qsTr("Clique ou pressione uma tecla para entrar")
+            text: I18n.t("idle.prompt")
             color: Tokens.colorTextMuted
             font.family: Tokens.fontBody
             font.pixelSize: 14
@@ -157,20 +158,20 @@ PanelWindow {
 
             ActionChip {
                 text: window.clockLayout === "stacked"
-                    ? qsTr("Relógio: vertical")
-                    : qsTr("Relógio: horizontal")
+                    ? I18n.t("clock.stacked")
+                    : I18n.t("clock.horizontal")
                 onClicked: window.clockLayout = window.clockLayout === "stacked"
                     ? "horizontal"
                     : "stacked"
             }
 
             ActionChip {
-                text: qsTr("Reiniciar")
+                text: I18n.t("power.restart")
                 onClicked: PowerService.reboot()
             }
 
             ActionChip {
-                text: qsTr("Desligar")
+                text: I18n.t("power.powerOff")
                 destructive: true
                 onClicked: PowerService.powerOff()
             }
@@ -190,7 +191,7 @@ PanelWindow {
             Text {
                 id: previewLabel
                 anchors.centerIn: parent
-                text: qsTr("Modo de demonstração")
+                text: I18n.t("preview.badge")
                 color: Tokens.colorText
                 font.family: Tokens.fontBody
                 font.pixelSize: 13
