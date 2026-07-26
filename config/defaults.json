@@ -1,8 +1,10 @@
 {
   "clockLayout": "stacked",
   "defaultUser": "",
+  "displayName": "",
+  "avatar": "",
   "language": "system",
-  "loginStartsOpen": false,
+  "loginStartsOpen": true,
   "wallpaper": "assets/default-wallpaper.svg",
   "sessions": [
     {
