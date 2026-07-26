@@ -1,9 +1,8 @@
 pragma Singleton
 
-import Quickshell
 import QtQuick
 
-Singleton {
+QtObject {
     readonly property string fontFamily: "Inter"
     readonly property string displayFontFamily: "Inter Display"
 
