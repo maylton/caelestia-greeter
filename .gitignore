@@ -1,0 +1,5 @@
+.qmlls.ini
+*.qmlc
+*.jsc
+*.log
+build/

@@ -1,0 +1,2 @@
+singleton AuthService 1.0 AuthService.qml
+singleton PowerService 1.0 PowerService.qml
