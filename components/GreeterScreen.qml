@@ -75,7 +75,7 @@ PanelWindow {
             color: window.loginOpen ? "#29030a12" : "transparent"
 
             Behavior on color {
-                ColorAnimation { duration: Tokens.motionMedium }
+                ColorAnimation { duration: Tokens.durationMedium }
             }
         }
 
@@ -97,7 +97,7 @@ PanelWindow {
 
             Behavior on y {
                 NumberAnimation {
-                    duration: Tokens.motionLong
+                    duration: Tokens.durationLong
                     easing.type: Easing.OutBack
                     easing.overshoot: 1.04
                 }
@@ -124,12 +124,12 @@ PanelWindow {
             }
 
             Behavior on opacity {
-                NumberAnimation { duration: Tokens.motionMedium }
+                NumberAnimation { duration: Tokens.durationMedium }
             }
 
             Behavior on scale {
                 NumberAnimation {
-                    duration: Tokens.motionLong
+                    duration: Tokens.durationLong
                     easing.type: Easing.OutBack
                     easing.overshoot: 1.08
                 }
@@ -142,8 +142,8 @@ PanelWindow {
             anchors.bottom: parent.bottom
             anchors.bottomMargin: 48
             text: qsTr("Clique ou pressione uma tecla para entrar")
-            color: Tokens.onSurfaceMuted
-            font.family: Tokens.fontFamily
+            color: Tokens.colorTextMuted
+            font.family: Tokens.fontBody
             font.pixelSize: 14
             font.weight: Font.Medium
         }
@@ -184,15 +184,15 @@ PanelWindow {
             width: previewLabel.implicitWidth + 28
             height: 38
             radius: height / 2
-            color: Tokens.surfaceContainer
-            border.color: Tokens.outline
+            color: Tokens.colorSurfaceContainer
+            border.color: Tokens.colorOutline
 
             Text {
                 id: previewLabel
                 anchors.centerIn: parent
                 text: qsTr("Modo de demonstração")
-                color: Tokens.onSurface
-                font.family: Tokens.fontFamily
+                color: Tokens.colorText
+                font.family: Tokens.fontBody
                 font.pixelSize: 13
                 font.weight: Font.DemiBold
             }
