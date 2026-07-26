@@ -16,10 +16,10 @@ Rectangle {
     signal closeRequested()
 
     implicitHeight: content.implicitHeight + 56
-    radius: Tokens.radiusExtraLarge
-    color: Tokens.surface
+    radius: Tokens.radiusXL
+    color: Tokens.colorSurface
     border.width: 1
-    border.color: Tokens.outline
+    border.color: Tokens.colorOutline
 
     function focusInitialField() {
         if (!root.active)
@@ -74,15 +74,15 @@ Rectangle {
                 width: 54
                 height: 54
                 radius: 20
-                color: Tokens.primaryContainer
+                color: Tokens.colorPrimaryContainer
 
                 Text {
                     anchors.centerIn: parent
                     text: usernameField.text.length > 0
                         ? usernameField.text.charAt(0).toUpperCase()
                         : "L"
-                    color: Tokens.onPrimaryContainer
-                    font.family: Tokens.displayFontFamily
+                    color: Tokens.colorPrimaryContainerText
+                    font.family: Tokens.fontDisplay
                     font.pixelSize: 24
                     font.weight: Font.DemiBold
                 }
@@ -94,8 +94,8 @@ Rectangle {
 
                 Text {
                     text: qsTr("Bem-vindo ao Lumina")
-                    color: Tokens.onSurface
-                    font.family: Tokens.displayFontFamily
+                    color: Tokens.colorText
+                    font.family: Tokens.fontDisplay
                     font.pixelSize: 22
                     font.weight: Font.DemiBold
                 }
@@ -104,8 +104,8 @@ Rectangle {
                     text: AuthService.previewMode
                         ? qsTr("Demonstração local — nenhuma sessão será iniciada")
                         : qsTr("Entre para iniciar sua sessão")
-                    color: Tokens.onSurfaceMuted
-                    font.family: Tokens.fontFamily
+                    color: Tokens.colorTextMuted
+                    font.family: Tokens.fontBody
                     font.pixelSize: 13
                 }
             }
@@ -136,8 +136,8 @@ Rectangle {
 
             Text {
                 text: qsTr("Sessão")
-                color: Tokens.onSurfaceMuted
-                font.family: Tokens.fontFamily
+                color: Tokens.colorTextMuted
+                font.family: Tokens.fontBody
                 font.pixelSize: 12
                 font.weight: Font.DemiBold
             }
@@ -168,11 +168,11 @@ Rectangle {
                 ? AuthService.errorMessage
                 : AuthService.statusMessage
             color: AuthService.errorMessage.length > 0
-                ? Tokens.error
-                : Tokens.onSurfaceMuted
+                ? Tokens.colorErrorText
+                : Tokens.colorTextMuted
             wrapMode: Text.Wrap
             horizontalAlignment: Text.AlignHCenter
-            font.family: Tokens.fontFamily
+            font.family: Tokens.fontBody
             font.pixelSize: 13
             font.weight: Font.Medium
         }
@@ -192,15 +192,15 @@ Rectangle {
                 height: 48
                 radius: 18
                 color: submitMouse.pressed
-                    ? Tokens.primaryPressed
-                    : Tokens.primary
+                    ? Tokens.colorPrimaryPressed
+                    : Tokens.colorPrimary
                 opacity: AuthService.busy ? 0.65 : 1
 
                 Text {
                     anchors.centerIn: parent
                     text: AuthService.busy ? qsTr("Entrando…") : qsTr("Entrar")
-                    color: Tokens.onPrimary
-                    font.family: Tokens.fontFamily
+                    color: Tokens.colorPrimaryText
+                    font.family: Tokens.fontBody
                     font.pixelSize: 14
                     font.weight: Font.Bold
                 }
