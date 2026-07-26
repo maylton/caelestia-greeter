@@ -1,6 +1,7 @@
 import Quickshell
 import QtQuick
 import "../design/Tokens.js" as Tokens
+import "../i18n"
 
 Item {
     id: root
@@ -39,12 +40,11 @@ Item {
             Text {
                 id: dateLabel
                 anchors.centerIn: parent
-                text: Qt.formatDate(systemClock.date, "dddd, d 'de' MMMM")
+                text: I18n.formatDate(systemClock.date)
                 color: Tokens.colorText
                 font.family: Tokens.fontBody
                 font.pixelSize: 16
                 font.weight: Font.DemiBold
-                font.capitalization: Font.Capitalize
             }
         }
     }
