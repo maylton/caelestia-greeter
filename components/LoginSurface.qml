@@ -1,5 +1,5 @@
 import QtQuick
-import "../design"
+import "../design/Tokens.js" as Tokens
 import "../services"
 
 Rectangle {
