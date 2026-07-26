@@ -1,6 +1,6 @@
 import Quickshell
 import QtQuick
-import "../design"
+import "../design/Tokens.js" as Tokens
 
 Item {
     id: root
