@@ -1,6 +1,7 @@
 {
   "clockLayout": "stacked",
   "defaultUser": "",
+  "language": "system",
   "loginStartsOpen": false,
   "wallpaper": "assets/default-wallpaper.svg",
   "sessions": [
