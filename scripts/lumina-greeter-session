@@ -43,7 +43,8 @@ detect_login_user() {
 
 resolve_login_identity() {
     local user passwd_entry gecos home_dir display_name
-    local accounts_file configured_icon candidate candidate_path
+    local accounts_file registered_name gecos_name
+    local configured_icon candidate candidate_path
 
     user="${LUMINA_GREETER_USER:-}"
     if [[ -z "$user" || "$user" == "greeter" || "$user" == "root" ]]; then
@@ -57,13 +58,24 @@ resolve_login_identity() {
     passwd_entry="$(getent passwd "$user" || true)"
     if [[ -n "$passwd_entry" ]]; then
         IFS=: read -r _ _ _ _ gecos home_dir _ <<<"$passwd_entry"
-        display_name="${gecos%%,*}"
-        display_name="${display_name:-$user}"
-        export LUMINA_GREETER_DISPLAY_NAME="${LUMINA_GREETER_DISPLAY_NAME:-$display_name}"
     else
+        gecos="$user"
         home_dir="/home/$user"
-        export LUMINA_GREETER_DISPLAY_NAME="${LUMINA_GREETER_DISPLAY_NAME:-$user}"
     fi
+
+    accounts_file="/var/lib/AccountsService/users/$user"
+    registered_name=""
+    if [[ -r "$accounts_file" ]]; then
+        registered_name="$(
+            awk -F= '$1 == "RealName" { print substr($0, index($0, "=") + 1); exit }' \
+                "$accounts_file"
+        )"
+    fi
+
+    gecos_name="${gecos%%,*}"
+    display_name="${registered_name:-$gecos_name}"
+    display_name="${display_name:-$user}"
+    export LUMINA_GREETER_DISPLAY_NAME="${LUMINA_GREETER_DISPLAY_NAME:-$display_name}"
 
     if [[ -n "${LUMINA_GREETER_AVATAR:-}" ]]; then
         candidate_path="${LUMINA_GREETER_AVATAR#file://}"
@@ -74,7 +86,6 @@ resolve_login_identity() {
         unset LUMINA_GREETER_AVATAR
     fi
 
-    accounts_file="/var/lib/AccountsService/users/$user"
     configured_icon=""
     if [[ -r "$accounts_file" ]]; then
         configured_icon="$(
