@@ -126,7 +126,7 @@ Singleton {
         function onReadyToLaunch() {
             root.statusMessage = I18n.t("auth.startingSession");
             if (root.launchCommand.length > 0)
-                Greetd.launch(root.launchCommand);
+                Greetd.launch(root.launchCommand, [], true);
             else {
                 root.busy = false;
                 root.errorMessage = I18n.t("auth.missingCommand");
