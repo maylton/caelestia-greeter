@@ -4,8 +4,15 @@ set -euo pipefail
 runtime_dir="${LUMINA_GREETER_RUNTIME_DIR:-/run/lumina-greeter}"
 cache_dir="${LUMINA_GREETER_CACHE_DIR:-/var/cache/lumina-greeter}"
 profile_file="$runtime_dir/profile.env"
+service_user="${LUMINA_GREETER_SERVICE_USER:-greeter}"
 
 install -d -m 0755 "$runtime_dir" "$cache_dir"
+
+if id "$service_user" >/dev/null 2>&1; then
+    service_group="$(id -gn "$service_user")"
+    install -d -m 0700 -o "$service_user" -g "$service_group" \
+        "$cache_dir/runtime-$service_user"
+fi
 
 detect_login_user() {
     local uid_min uid_max
