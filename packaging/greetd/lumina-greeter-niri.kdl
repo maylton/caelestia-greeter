@@ -1,7 +1,7 @@
 // Minimal Niri session used only to host Lumina Greeter.
-// greetd starts the authenticated desktop only after this temporary session
-// exits, so close Niri as soon as the Quickshell greeter terminates.
-spawn-at-startup "/usr/bin/sh" "-c" "/usr/bin/lumina-greeter-session; /usr/bin/niri msg action quit --skip-confirmation"
+// The greeter writes a runtime marker only after greetd accepts the target
+// desktop session. Unexpected Quickshell exits must not tear down this Niri.
+spawn-at-startup "/usr/bin/sh" "-c" "marker=\"${XDG_RUNTIME_DIR:-/tmp}/lumina-greeter-launch-requested\"; rm -f \"$marker\"; /usr/bin/lumina-greeter-session; status=$?; if [ -f \"$marker\" ]; then /usr/bin/niri msg action quit --skip-confirmation; exit 0; fi; echo \"Lumina Greeter exited unexpectedly with status $status; keeping temporary Niri active.\" >&2; exec /usr/bin/sleep infinity"
 
 hotkey-overlay {
     skip-at-startup
