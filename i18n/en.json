@@ -19,6 +19,7 @@
   },
   "login": {
     "welcome": "Welcome to Lumina",
+    "welcomeUser": "Welcome, %1",
     "subtitle": "Sign in to start your session",
     "username": "Username",
     "password": "Password",
