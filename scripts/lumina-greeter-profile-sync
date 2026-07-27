@@ -9,27 +9,27 @@ install -d -m 0755 "$runtime_dir" "$cache_dir"
 
 detect_login_user() {
     local uid_min uid_max
+    local name password uid gid gecos home shell
+    local best_name="" best_uid=""
 
     uid_min="$(awk '$1 == "UID_MIN" { print $2; exit }' /etc/login.defs 2>/dev/null || true)"
     uid_max="$(awk '$1 == "UID_MAX" { print $2; exit }' /etc/login.defs 2>/dev/null || true)"
     uid_min="${uid_min:-1000}"
     uid_max="${uid_max:-60000}"
 
-    getent passwd | awk -F: -v min="$uid_min" -v max="$uid_max" '
-        ($3 >= min && $3 <= max
-            && $1 != "nobody"
-            && $1 != "greeter"
-            && $7 !~ /(nologin|false)$/) {
-            if (best_name == "" || $3 < best_uid) {
-                best_name = $1
-                best_uid = $3
-            }
-        }
-        END {
-            if (best_name != "")
-                print best_name
-        }
-    '
+    while IFS=: read -r name password uid gid gecos home shell; do
+        [[ "$uid" =~ ^[0-9]+$ ]] || continue
+        (( uid >= uid_min && uid <= uid_max )) || continue
+        [[ "$name" != "nobody" && "$name" != "greeter" ]] || continue
+        [[ ! "$shell" =~ (nologin|false)$ ]] || continue
+
+        if [[ -z "$best_name" ]] || (( uid < best_uid )); then
+            best_name="$name"
+            best_uid="$uid"
+        fi
+    done < <(getent passwd)
+
+    printf '%s' "$best_name"
 }
 
 find_lumina_state_file() {
