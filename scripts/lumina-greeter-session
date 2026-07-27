@@ -55,7 +55,7 @@ find_lumina_state_file() {
 read_lumina_avatar_path() {
     local state_file="$1"
 
-    [[ -n "$state_file" ]] || return
+    [[ -n "$state_file" ]] || return 0
 
     if command -v python3 >/dev/null 2>&1; then
         python3 - "$state_file" <<'PY'
@@ -86,7 +86,7 @@ else:
 if value:
     print(str(pathlib.Path(value).expanduser()))
 PY
-        return
+        return 0
     fi
 
     sed -n 's/.*"dashboardUserAvatarPath"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
@@ -104,7 +104,7 @@ resolve_user_profile() {
     fi
 
     if [[ -z "$user" ]]; then
-        return
+        return 0
     fi
 
     export LUMINA_GREETER_USER="$user"
@@ -121,7 +121,7 @@ resolve_user_profile() {
     fi
 
     if [[ -n "${LUMINA_GREETER_AVATAR:-}" ]]; then
-        return
+        return 0
     fi
 
     accounts_file="/var/lib/AccountsService/users/$user"
@@ -151,9 +151,22 @@ resolve_user_profile() {
         printf 'Lumina Greeter: configured Lumina Shell avatar is not readable: %s\n' \
             "$lumina_avatar" >&2
     fi
+
+    return 0
 }
 
+# Profile discovery is optional. A missing or malformed avatar must never keep
+# the login interface from starting.
+set +e
 resolve_user_profile
+profile_status=$?
+set -e
+
+if (( profile_status != 0 )); then
+    printf 'Lumina Greeter: profile discovery failed with status %s; continuing without it.\n' \
+        "$profile_status" >&2
+    unset LUMINA_GREETER_AVATAR
+fi
 
 config_dir="${LUMINA_GREETER_CONFIG_DIR:-/etc/xdg/quickshell/lumina-greeter}"
 exec /usr/bin/qs -p "$config_dir"
