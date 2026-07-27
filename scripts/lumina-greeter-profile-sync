@@ -105,7 +105,17 @@ else
     home_dir="/home/$user"
 fi
 
-display_name="${gecos%%,*}"
+accounts_file="/var/lib/AccountsService/users/$user"
+registered_name=""
+if [[ -r "$accounts_file" ]]; then
+    registered_name="$(
+        awk -F= '$1 == "RealName" { print substr($0, index($0, "=") + 1); exit }' \
+            "$accounts_file"
+    )"
+fi
+
+gecos_name="${gecos%%,*}"
+display_name="${registered_name:-$gecos_name}"
 display_name="${display_name:-$user}"
 
 avatar_enabled=1
@@ -121,7 +131,6 @@ avatar_cache="$cache_dir/avatar-$user"
 rm -f "$avatar_cache.tmp"
 
 if [[ "$avatar_enabled" == "1" ]]; then
-    accounts_file="/var/lib/AccountsService/users/$user"
     configured_icon=""
     if [[ -r "$accounts_file" ]]; then
         configured_icon="$(
