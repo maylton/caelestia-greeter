@@ -9,11 +9,11 @@
   "sessions": [
     {
       "name": "Lumina Shell",
-      "command": ["niri-session"]
+      "command": ["/usr/bin/niri-session"]
     },
     {
       "name": "Niri",
-      "command": ["niri-session"]
+      "command": ["/usr/bin/niri-session"]
     }
   ]
 }
