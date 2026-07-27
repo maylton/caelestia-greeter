@@ -35,6 +35,7 @@
     "previewSuccess": "Autenticação simulada com sucesso.",
     "failed": "Não foi possível autenticar. Verifique a senha.",
     "startingSession": "Iniciando sessão…",
-    "missingCommand": "Nenhum comando de sessão foi configurado."
+    "missingCommand": "Nenhum comando de sessão foi configurado.",
+    "handoffFailed": "Não foi possível preparar a abertura da sessão."
   }
 }
