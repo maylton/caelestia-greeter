@@ -19,6 +19,7 @@
   },
   "login": {
     "welcome": "Bem-vindo ao Lumina",
+    "welcomeUser": "Bem-vindo, %1",
     "subtitle": "Entre para iniciar sua sessão",
     "username": "Nome de usuário",
     "password": "Senha",
