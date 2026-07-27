@@ -32,6 +32,67 @@ detect_login_user() {
     printf '%s' "$best_name"
 }
 
+trim_whitespace() {
+    local value="$1"
+
+    value="${value#"${value%%[![:space:]]*}"}"
+    value="${value%"${value##*[![:space:]]}"}"
+    printf '%s' "$value"
+}
+
+resolve_display_name() {
+    local user="$1"
+    local registered_name gecos_name
+
+    registered_name="$(trim_whitespace "$2")"
+    gecos_name="$(trim_whitespace "$3")"
+
+    if [[ "$registered_name" == *[[:space:]]* \
+        && "${registered_name,,}" != "${user,,}" ]]; then
+        printf '%s' "$registered_name"
+    elif [[ "$gecos_name" == *[[:space:]]* \
+        && "${gecos_name,,}" != "${user,,}" ]]; then
+        printf '%s' "$gecos_name"
+    elif [[ -n "$registered_name" \
+        && "${registered_name,,}" != "${user,,}" ]]; then
+        printf '%s' "$registered_name"
+    elif [[ -n "$gecos_name" \
+        && "${gecos_name,,}" != "${user,,}" ]]; then
+        printf '%s' "$gecos_name"
+    else
+        printf '%s' "$user"
+    fi
+}
+
+avatar_extension() {
+    local path="$1"
+    local extension mime_type
+
+    extension="${path##*.}"
+    extension="${extension,,}"
+
+    case "$extension" in
+        png|jpg|jpeg|webp|bmp|gif|svg)
+            printf '%s' "$extension"
+            return 0
+            ;;
+    esac
+
+    if command -v file >/dev/null 2>&1; then
+        mime_type="$(file --brief --mime-type "$path" 2>/dev/null || true)"
+        case "$mime_type" in
+            image/png) printf 'png'; return 0 ;;
+            image/jpeg) printf 'jpg'; return 0 ;;
+            image/webp) printf 'webp'; return 0 ;;
+            image/bmp) printf 'bmp'; return 0 ;;
+            image/gif) printf 'gif'; return 0 ;;
+            image/svg+xml) printf 'svg'; return 0 ;;
+        esac
+    fi
+
+    printf 'img'
+}
+
 find_lumina_state_file() {
     local home_dir="$1"
     local state_root="$home_dir/.local/state/quickshell"
@@ -115,8 +176,7 @@ if [[ -r "$accounts_file" ]]; then
 fi
 
 gecos_name="${gecos%%,*}"
-display_name="${registered_name:-$gecos_name}"
-display_name="${display_name:-$user}"
+display_name="$(resolve_display_name "$user" "$registered_name" "$gecos_name")"
 
 avatar_enabled=1
 lumina_avatar=""
@@ -127,8 +187,9 @@ if [[ -n "$settings_result" ]]; then
     avatar_enabled="${avatar_enabled:-1}"
 fi
 
-avatar_cache="$cache_dir/avatar-$user"
-rm -f "$avatar_cache.tmp"
+avatar_cache_base="$cache_dir/avatar-$user"
+avatar_cache=""
+rm -f "$avatar_cache_base" "$avatar_cache_base".*
 
 if [[ "$avatar_enabled" == "1" ]]; then
     configured_icon=""
@@ -148,20 +209,20 @@ if [[ "$avatar_enabled" == "1" ]]; then
         [[ -n "$candidate" ]] || continue
         candidate_path="${candidate#file://}"
         if [[ -f "$candidate_path" && -r "$candidate_path" ]]; then
+            extension="$(avatar_extension "$candidate_path")"
+            avatar_cache="$avatar_cache_base.$extension"
             install -m 0644 "$candidate_path" "$avatar_cache.tmp"
             mv -f "$avatar_cache.tmp" "$avatar_cache"
             break
         fi
     done
-else
-    rm -f "$avatar_cache"
 fi
 
 profile_tmp="$profile_file.tmp"
 {
     printf 'LUMINA_GREETER_USER=%q\n' "$user"
     printf 'LUMINA_GREETER_DISPLAY_NAME=%q\n' "$display_name"
-    if [[ -f "$avatar_cache" && -r "$avatar_cache" ]]; then
+    if [[ -n "$avatar_cache" && -f "$avatar_cache" && -r "$avatar_cache" ]]; then
         printf 'LUMINA_GREETER_AVATAR=%q\n' "$avatar_cache"
     fi
 } >"$profile_tmp"
