@@ -1,0 +1,161 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+runtime_dir="${LUMINA_GREETER_RUNTIME_DIR:-/run/lumina-greeter}"
+cache_dir="${LUMINA_GREETER_CACHE_DIR:-/var/cache/lumina-greeter}"
+profile_file="$runtime_dir/profile.env"
+
+install -d -m 0755 "$runtime_dir" "$cache_dir"
+
+detect_login_user() {
+    local uid_min uid_max
+
+    uid_min="$(awk '$1 == "UID_MIN" { print $2; exit }' /etc/login.defs 2>/dev/null || true)"
+    uid_max="$(awk '$1 == "UID_MAX" { print $2; exit }' /etc/login.defs 2>/dev/null || true)"
+    uid_min="${uid_min:-1000}"
+    uid_max="${uid_max:-60000}"
+
+    getent passwd | awk -F: -v min="$uid_min" -v max="$uid_max" '
+        ($3 >= min && $3 <= max
+            && $1 != "nobody"
+            && $1 != "greeter"
+            && $7 !~ /(nologin|false)$/) {
+            if (best_name == "" || $3 < best_uid) {
+                best_name = $1
+                best_uid = $3
+            }
+        }
+        END {
+            if (best_name != "")
+                print best_name
+        }
+    '
+}
+
+find_lumina_state_file() {
+    local home_dir="$1"
+    local state_root="$home_dir/.local/state/quickshell"
+
+    [[ -d "$state_root" ]] || return 0
+
+    find "$state_root" -type f -name lumina-state.json -printf '%T@ %p\n' \
+        2>/dev/null \
+        | sort -nr \
+        | head -n 1 \
+        | cut -d' ' -f2-
+}
+
+read_lumina_avatar_settings() {
+    local state_file="$1"
+
+    [[ -n "$state_file" && -r "$state_file" ]] || return 0
+
+    if command -v python3 >/dev/null 2>&1; then
+        python3 - "$state_file" <<'PY'
+import json
+import pathlib
+import sys
+import urllib.parse
+
+try:
+    with open(sys.argv[1], "r", encoding="utf-8") as handle:
+        state = json.load(handle)
+except (OSError, ValueError):
+    raise SystemExit(0)
+
+enabled = state.get("dashboardUseUserAvatarImage", True) is not False
+value = str(state.get("dashboardUserAvatarPath", "") or "").strip()
+
+if value.startswith("file:"):
+    parsed = urllib.parse.urlparse(value)
+    value = urllib.parse.unquote(parsed.path)
+else:
+    value = urllib.parse.unquote(value)
+
+if value:
+    value = str(pathlib.Path(value).expanduser())
+
+print(("1" if enabled else "0") + "\t" + value)
+PY
+        return 0
+    fi
+
+    printf '1\t%s\n' "$(
+        sed -n 's/.*"dashboardUserAvatarPath"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
+            "$state_file" | head -n 1
+    )"
+}
+
+user="${LUMINA_GREETER_USER:-}"
+if [[ -z "$user" || "$user" == "greeter" || "$user" == "root" ]]; then
+    user="$(detect_login_user || true)"
+fi
+
+if [[ -z "$user" ]]; then
+    printf 'Lumina Greeter: no login user could be detected.\n' >&2
+    rm -f "$profile_file"
+    exit 0
+fi
+
+passwd_entry="$(getent passwd "$user" || true)"
+if [[ -n "$passwd_entry" ]]; then
+    IFS=: read -r _ _ _ _ gecos home_dir _ <<<"$passwd_entry"
+else
+    gecos="$user"
+    home_dir="/home/$user"
+fi
+
+display_name="${gecos%%,*}"
+display_name="${display_name:-$user}"
+
+avatar_enabled=1
+lumina_avatar=""
+lumina_state_file="$(find_lumina_state_file "$home_dir" || true)"
+settings_result="$(read_lumina_avatar_settings "$lumina_state_file" || true)"
+if [[ -n "$settings_result" ]]; then
+    IFS=$'\t' read -r avatar_enabled lumina_avatar <<<"$settings_result"
+    avatar_enabled="${avatar_enabled:-1}"
+fi
+
+avatar_cache="$cache_dir/avatar-$user"
+rm -f "$avatar_cache.tmp"
+
+if [[ "$avatar_enabled" == "1" ]]; then
+    accounts_file="/var/lib/AccountsService/users/$user"
+    configured_icon=""
+    if [[ -r "$accounts_file" ]]; then
+        configured_icon="$(
+            awk -F= '$1 == "Icon" { print substr($0, index($0, "=") + 1); exit }' \
+                "$accounts_file"
+        )"
+    fi
+
+    for candidate in \
+        "$configured_icon" \
+        "/var/lib/AccountsService/icons/$user" \
+        "$home_dir/.face.icon" \
+        "$home_dir/.face" \
+        "$lumina_avatar"; do
+        [[ -n "$candidate" ]] || continue
+        candidate_path="${candidate#file://}"
+        if [[ -f "$candidate_path" && -r "$candidate_path" ]]; then
+            install -m 0644 "$candidate_path" "$avatar_cache.tmp"
+            mv -f "$avatar_cache.tmp" "$avatar_cache"
+            break
+        fi
+    done
+else
+    rm -f "$avatar_cache"
+fi
+
+profile_tmp="$profile_file.tmp"
+{
+    printf 'LUMINA_GREETER_USER=%q\n' "$user"
+    printf 'LUMINA_GREETER_DISPLAY_NAME=%q\n' "$display_name"
+    if [[ -f "$avatar_cache" && -r "$avatar_cache" ]]; then
+        printf 'LUMINA_GREETER_AVATAR=%q\n' "$avatar_cache"
+    fi
+} >"$profile_tmp"
+
+chmod 0644 "$profile_tmp"
+mv -f "$profile_tmp" "$profile_file"
