@@ -41,6 +41,38 @@ detect_login_user() {
     printf '%s' "$best_name"
 }
 
+trim_whitespace() {
+    local value="$1"
+
+    value="${value#"${value%%[![:space:]]*}"}"
+    value="${value%"${value##*[![:space:]]}"}"
+    printf '%s' "$value"
+}
+
+resolve_display_name() {
+    local user="$1"
+    local registered_name gecos_name
+
+    registered_name="$(trim_whitespace "$2")"
+    gecos_name="$(trim_whitespace "$3")"
+
+    if [[ "$registered_name" == *[[:space:]]* \
+        && "${registered_name,,}" != "${user,,}" ]]; then
+        printf '%s' "$registered_name"
+    elif [[ "$gecos_name" == *[[:space:]]* \
+        && "${gecos_name,,}" != "${user,,}" ]]; then
+        printf '%s' "$gecos_name"
+    elif [[ -n "$registered_name" \
+        && "${registered_name,,}" != "${user,,}" ]]; then
+        printf '%s' "$registered_name"
+    elif [[ -n "$gecos_name" \
+        && "${gecos_name,,}" != "${user,,}" ]]; then
+        printf '%s' "$gecos_name"
+    else
+        printf '%s' "$user"
+    fi
+}
+
 resolve_login_identity() {
     local user passwd_entry gecos home_dir display_name
     local accounts_file registered_name gecos_name
@@ -73,9 +105,12 @@ resolve_login_identity() {
     fi
 
     gecos_name="${gecos%%,*}"
-    display_name="${registered_name:-$gecos_name}"
-    display_name="${display_name:-$user}"
-    export LUMINA_GREETER_DISPLAY_NAME="${LUMINA_GREETER_DISPLAY_NAME:-$display_name}"
+    display_name="$(resolve_display_name "$user" "$registered_name" "$gecos_name")"
+
+    if [[ -z "${LUMINA_GREETER_DISPLAY_NAME:-}" \
+        || "${LUMINA_GREETER_DISPLAY_NAME,,}" == "${user,,}" ]]; then
+        export LUMINA_GREETER_DISPLAY_NAME="$display_name"
+    fi
 
     if [[ -n "${LUMINA_GREETER_AVATAR:-}" ]]; then
         candidate_path="${LUMINA_GREETER_AVATAR#file://}"
