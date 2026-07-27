@@ -35,6 +35,7 @@
     "previewSuccess": "Authentication successfully simulated.",
     "failed": "Could not authenticate. Check your password.",
     "startingSession": "Starting session…",
-    "missingCommand": "No session command is configured."
+    "missingCommand": "No session command is configured.",
+    "handoffFailed": "Could not prepare the session handoff."
   }
 }
