@@ -1,6 +1,7 @@
 pragma Singleton
 
 import Quickshell
+import Quickshell.Io
 import Quickshell.Services.Greetd
 import QtQuick
 import "../i18n"
@@ -17,6 +18,12 @@ Singleton {
     property bool busy: false
     property bool awaitingResponse: false
     property bool echoResponse: false
+    property bool launchMarkerPending: false
+
+    readonly property string launchMarkerPath: {
+        const runtimeDir = Quickshell.env("XDG_RUNTIME_DIR") || "/tmp";
+        return runtimeDir + "/lumina-greeter-launch-requested";
+    }
 
     readonly property bool previewMode: {
         const forced = Quickshell.env("LUMINA_GREETER_PREVIEW") || "";
@@ -65,11 +72,49 @@ Singleton {
         root.pendingResponse = "";
         root.busy = false;
         root.awaitingResponse = false;
+        root.launchMarkerPending = false;
         root.statusMessage = "";
         root.errorMessage = "";
 
+        if (launchMarkerProcess.running)
+            launchMarkerProcess.running = false;
+
         if (!root.previewMode && Greetd.user.length > 0)
             Greetd.cancelSession();
+    }
+
+    function requestSessionLaunch() {
+        if (root.launchCommand.length === 0) {
+            root.busy = false;
+            root.errorMessage = I18n.t("auth.missingCommand");
+            return;
+        }
+
+        root.launchMarkerPending = true;
+        launchMarkerProcess.exec([
+            "/usr/bin/touch",
+            root.launchMarkerPath
+        ]);
+    }
+
+    Process {
+        id: launchMarkerProcess
+
+        onExited: (exitCode, exitStatus) => {
+            if (!root.launchMarkerPending)
+                return;
+
+            root.launchMarkerPending = false;
+
+            if (exitCode !== 0) {
+                root.busy = false;
+                root.statusMessage = "";
+                root.errorMessage = I18n.t("auth.handoffFailed");
+                return;
+            }
+
+            Greetd.launch(root.launchCommand, [], true);
+        }
     }
 
     Timer {
@@ -117,6 +162,7 @@ Singleton {
             root.pendingResponse = "";
             root.busy = false;
             root.awaitingResponse = false;
+            root.launchMarkerPending = false;
             root.statusMessage = "";
             root.errorMessage = message && message.length > 0
                 ? message
@@ -125,17 +171,13 @@ Singleton {
 
         function onReadyToLaunch() {
             root.statusMessage = I18n.t("auth.startingSession");
-            if (root.launchCommand.length > 0)
-                Greetd.launch(root.launchCommand, [], true);
-            else {
-                root.busy = false;
-                root.errorMessage = I18n.t("auth.missingCommand");
-            }
+            root.requestSessionLaunch();
         }
 
         function onError(error) {
             root.busy = false;
             root.awaitingResponse = false;
+            root.launchMarkerPending = false;
             root.statusMessage = "";
             root.errorMessage = error;
         }
