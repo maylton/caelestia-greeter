@@ -19,6 +19,9 @@ Rectangle {
     readonly property string profileLabel: displayName.length > 0
         ? displayName
         : defaultUser
+    readonly property string welcomeLabel: profileLabel.length > 0
+        ? I18n.t("login.welcomeUser").replace("%1", profileLabel)
+        : I18n.t("login.welcome")
 
     signal closeRequested()
 
@@ -110,6 +113,11 @@ Rectangle {
                     asynchronous: false
                     cache: true
                     visible: status === Image.Ready
+
+                    onStatusChanged: {
+                        if (status === Image.Error && root.avatarSource.length > 0)
+                            console.warn("Lumina Greeter: failed to load avatar:", root.avatarSource);
+                    }
                 }
 
                 Text {
@@ -132,9 +140,7 @@ Rectangle {
 
                 Text {
                     width: parent.width
-                    text: root.profileLabel.length > 0
-                        ? root.profileLabel
-                        : I18n.t("login.welcome")
+                    text: root.welcomeLabel
                     color: Tokens.colorText
                     elide: Text.ElideRight
                     font.family: Tokens.fontDisplay
