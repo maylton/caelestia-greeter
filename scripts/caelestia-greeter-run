@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+marker="${XDG_RUNTIME_DIR:-/tmp}/caelestia-greeter-launch-requested"
+rm -f "$marker"
+
+/usr/local/bin/caelestia-greeter-session
+status=$?
+
+if [[ -f "$marker" ]]; then
+    /usr/bin/hyprctl dispatch exit >/dev/null 2>&1 || true
+    exit 0
+fi
+
+printf 'Caelestia Greeter exited unexpectedly with status %s; keeping temporary Hyprland active.\n' \
+    "$status" >&2
+exec /usr/bin/sleep infinity
