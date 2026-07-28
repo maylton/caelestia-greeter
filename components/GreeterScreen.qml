@@ -158,7 +158,7 @@ PanelWindow {
             readonly property real closedY: Math.round((scene.height - height) / 2 - 26)
             readonly property real openY: Math.max(52, scene.height * 0.10)
 
-            baseSize: Math.max(150, Math.min(scene.width * 0.13, scene.height * 0.22))
+            baseSize: Math.max(112, Math.min(scene.width * 0.16, scene.height * 0.25))
             x: Math.round((scene.width - width) / 2)
             y: closedY
                 + (openY - closedY) * window.loginSpatial
