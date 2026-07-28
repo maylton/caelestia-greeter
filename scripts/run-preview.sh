@@ -18,6 +18,22 @@ fi
 export CAELESTIA_GREETER_DISPLAY_NAME="${CAELESTIA_GREETER_DISPLAY_NAME:-${gecos%%,*}}"
 export CAELESTIA_GREETER_STATE_DIR="${CAELESTIA_GREETER_STATE_DIR:-$home_dir/.local/state/caelestia}"
 
+if [[ -z "${CAELESTIA_GREETER_GOOGLE_SANS_FLEX_SOURCE:-}" ]]; then
+    font_name="GoogleSansFlex-VariableFont_GRAD,ROND,opsz,slnt,wdth,wght.ttf"
+    config_home="${XDG_CONFIG_HOME:-$home_dir/.config}"
+
+    for candidate in \
+        "$config_home/quickshell/caelestia/assets/google-sans-flex/$font_name" \
+        "$home_dir/.config/quickshell/caelestia/assets/google-sans-flex/$font_name" \
+        "/etc/xdg/quickshell/caelestia/assets/google-sans-flex/$font_name" \
+        "/usr/share/quickshell/caelestia/assets/google-sans-flex/$font_name"; do
+        if [[ -r "$candidate" && -f "$candidate" ]]; then
+            export CAELESTIA_GREETER_GOOGLE_SANS_FLEX_SOURCE="$candidate"
+            break
+        fi
+    done
+fi
+
 if [[ -z "${CAELESTIA_GREETER_AVATAR:-}" ]]; then
     accounts_file="/var/lib/AccountsService/users/$user"
     icon=""
