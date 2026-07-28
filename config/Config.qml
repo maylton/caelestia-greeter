@@ -7,8 +7,17 @@ import QtQuick
 Singleton {
     id: root
 
+    function env(primaryName, legacyName) {
+        const primary = Quickshell.env(primaryName) || "";
+        if (primary.length > 0)
+            return primary;
+
+        return legacyName ? (Quickshell.env(legacyName) || "") : "";
+    }
+
     FileView {
         id: defaultsFile
+
         path: Qt.resolvedUrl("defaults.json")
         blockLoading: true
         watchChanges: true
@@ -19,13 +28,50 @@ Singleton {
             const parsed = JSON.parse(defaultsFile.text());
             return parsed && typeof parsed === "object" ? parsed : ({});
         } catch (error) {
-            console.warn("Lumina Greeter: invalid config/defaults.json:", error);
+            console.warn("Caelestia Greeter: invalid config/defaults.json:", error);
             return ({});
         }
     }
 
+    readonly property string stateDir: {
+        const override = env("CAELESTIA_GREETER_STATE_DIR", "");
+        if (override.length > 0)
+            return override;
+
+        const home = Quickshell.env("HOME") || "";
+        const stateHome = Quickshell.env("XDG_STATE_HOME") || (home.length > 0 ? home + "/.local/state" : "");
+        return stateHome.length > 0 ? stateHome + "/caelestia" : "";
+    }
+
+    readonly property string schemePath: {
+        const override = env("CAELESTIA_GREETER_SCHEME_PATH", "");
+        if (override.length > 0)
+            return override;
+
+        return stateDir.length > 0 ? stateDir + "/scheme.json" : "";
+    }
+
+    FileView {
+        id: wallpaperStateFile
+
+        path: root.stateDir.length > 0
+            ? root.stateDir + "/wallpaper/path.txt"
+            : ""
+        blockLoading: true
+        watchChanges: true
+        printErrors: false
+    }
+
+    readonly property string currentCaelestiaWallpaper: {
+        try {
+            return wallpaperStateFile.text().trim();
+        } catch (error) {
+            return "";
+        }
+    }
+
     readonly property string clockLayout: {
-        const override = Quickshell.env("LUMINA_GREETER_CLOCK_LAYOUT") || "";
+        const override = env("CAELESTIA_GREETER_CLOCK_LAYOUT", "LUMINA_GREETER_CLOCK_LAYOUT");
         if (override === "stacked" || override === "horizontal")
             return override;
 
@@ -33,12 +79,12 @@ Singleton {
     }
 
     readonly property string defaultUser: {
-        const override = Quickshell.env("LUMINA_GREETER_USER") || "";
+        const override = env("CAELESTIA_GREETER_USER", "LUMINA_GREETER_USER");
         return override.length > 0 ? override : (values.defaultUser || "");
     }
 
     readonly property string displayName: {
-        const override = Quickshell.env("LUMINA_GREETER_DISPLAY_NAME") || "";
+        const override = env("CAELESTIA_GREETER_DISPLAY_NAME", "LUMINA_GREETER_DISPLAY_NAME");
         if (override.length > 0)
             return override;
         if (typeof values.displayName === "string" && values.displayName.length > 0)
@@ -47,7 +93,7 @@ Singleton {
     }
 
     readonly property string avatarSource: {
-        const override = Quickshell.env("LUMINA_GREETER_AVATAR") || "";
+        const override = env("CAELESTIA_GREETER_AVATAR", "LUMINA_GREETER_AVATAR");
         const configured = override.length > 0
             ? override
             : (values.avatar || "");
@@ -63,7 +109,7 @@ Singleton {
     }
 
     readonly property string language: {
-        const override = Quickshell.env("LUMINA_GREETER_LANGUAGE") || "";
+        const override = env("CAELESTIA_GREETER_LANGUAGE", "LUMINA_GREETER_LANGUAGE");
         return override.length > 0 ? override : (values.language || "system");
     }
 
@@ -73,15 +119,20 @@ Singleton {
         if (Array.isArray(values.sessions) && values.sessions.length > 0)
             return values.sessions;
 
-        return [{ "name": "Niri", "command": ["niri-session"] }];
+        return [{ "name": "Caelestia", "command": ["/usr/bin/Hyprland"] }];
     }
 
     readonly property string wallpaperSource: {
-        const override = Quickshell.env("LUMINA_GREETER_WALLPAPER") || "";
-        const configured = override.length > 0
+        const override = env("CAELESTIA_GREETER_WALLPAPER", "LUMINA_GREETER_WALLPAPER");
+        let configured = override.length > 0
             ? override
-            : (values.wallpaper || "assets/default-wallpaper.svg");
+            : (values.wallpaper || "caelestia");
 
+        if (configured === "caelestia")
+            configured = currentCaelestiaWallpaper;
+
+        if (configured.length === 0)
+            configured = "assets/default-wallpaper.svg";
         if (configured.startsWith("file:") || configured.startsWith("qrc:"))
             return configured;
         if (configured.startsWith("/"))
