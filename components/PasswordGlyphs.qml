@@ -53,12 +53,6 @@ Item {
             return width + implicitHeight;
         }
 
-        function bindImplicitWidth() {
-            implicitWidthBehavior.enabled = false;
-            implicitWidth = Qt.binding(() => fullWidth);
-            implicitWidthBehavior.enabled = true;
-        }
-
         anchors.centerIn: parent
         anchors.horizontalCenterOffset: implicitWidth > root.width
             ? -(implicitWidth - root.width) / 2
@@ -77,7 +71,6 @@ Item {
         delegate: CharItem {}
 
         Behavior on implicitWidth {
-            id: implicitWidthBehavior
             Anim { type: Motion.defaultSpatial }
         }
     }
