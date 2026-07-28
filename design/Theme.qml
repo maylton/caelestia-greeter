@@ -94,7 +94,4 @@ Singleton {
     readonly property color loginScrim: withAlpha(baseScrim, light ? 0.18 : 0.30)
 
     readonly property int radiusXL: 34
-    readonly property int durationShort: 120
-    readonly property int durationMedium: 220
-    readonly property int durationLong: 440
 }
