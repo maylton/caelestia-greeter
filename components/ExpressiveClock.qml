@@ -1,6 +1,6 @@
 import Quickshell
 import QtQuick
-import "../design/Tokens.js" as Tokens
+import "../design"
 import "../i18n"
 
 Item {
@@ -19,6 +19,7 @@ Item {
 
     Column {
         id: content
+
         anchors.centerIn: parent
         spacing: 16
 
@@ -34,15 +35,16 @@ Item {
             width: dateLabel.implicitWidth + 34
             height: 42
             radius: height / 2
-            color: Tokens.colorSurfaceContainer
-            border.color: Tokens.colorOutline
+            color: Theme.colorTertiaryContainer
+            border.color: Theme.colorOutline
 
             Text {
                 id: dateLabel
+
                 anchors.centerIn: parent
                 text: I18n.formatDate(systemClock.date)
-                color: Tokens.colorText
-                font.family: Tokens.fontBody
+                color: Theme.colorTertiaryContainerText
+                font.family: Theme.fontBody
                 font.pixelSize: 16
                 font.weight: Font.DemiBold
             }
@@ -58,8 +60,8 @@ Item {
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: Qt.formatTime(systemClock.date, "HH")
-                color: Tokens.colorText
-                font.family: Tokens.fontDisplay
+                color: Theme.colorText
+                font.family: Theme.fontDisplay
                 font.pixelSize: root.baseSize * 0.74
                 font.weight: Font.Bold
                 font.letterSpacing: -4
@@ -68,8 +70,8 @@ Item {
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: Qt.formatTime(systemClock.date, "mm")
-                color: Tokens.colorText
-                font.family: Tokens.fontDisplay
+                color: Theme.colorText
+                font.family: Theme.fontDisplay
                 font.pixelSize: root.baseSize * 0.74
                 font.weight: Font.Bold
                 font.letterSpacing: -4
@@ -82,8 +84,8 @@ Item {
 
         Text {
             text: Qt.formatTime(systemClock.date, "HH:mm")
-            color: Tokens.colorText
-            font.family: Tokens.fontDisplay
+            color: Theme.colorText
+            font.family: Theme.fontDisplay
             font.pixelSize: root.baseSize
             font.weight: Font.Bold
             font.letterSpacing: -5
