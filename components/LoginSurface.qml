@@ -20,6 +20,8 @@ Rectangle {
     readonly property string welcomeLabel: profileLabel
         ? I18n.t("login.welcomeUser").replace("%1", profileLabel)
         : I18n.t("login.welcome")
+    readonly property bool hasMessage: AuthService.errorMessage.length > 0
+        || AuthService.statusMessage.length > 0
 
     signal closeRequested()
 
@@ -61,6 +63,14 @@ Rectangle {
     Component.onCompleted: root.focusInitialField()
     onActiveChanged: root.focusInitialField()
     onDefaultUserChanged: root.focusInitialField()
+
+    Behavior on color {
+        CAnim { type: Motion.slowEffects }
+    }
+
+    Behavior on border.color {
+        CAnim { type: Motion.slowEffects }
+    }
 
     Timer {
         id: initialFocusTimer
@@ -215,8 +225,11 @@ Rectangle {
         }
 
         Text {
+            id: statusText
+
             width: parent.width
-            visible: AuthService.errorMessage || AuthService.statusMessage
+            height: root.hasMessage ? implicitHeight : 0
+            visible: height > 0
             text: AuthService.errorMessage || AuthService.statusMessage
             color: AuthService.errorMessage ? Theme.colorErrorText : Theme.colorTextMuted
             wrapMode: Text.Wrap
@@ -224,6 +237,24 @@ Rectangle {
             font.family: Theme.fontBody
             font.pixelSize: 13
             font.weight: Font.Medium
+            opacity: root.hasMessage ? 1 : 0
+            scale: root.hasMessage ? 1 : 0.96
+
+            Behavior on height {
+                Anim { type: Motion.fastSpatial }
+            }
+
+            Behavior on opacity {
+                Anim { type: Motion.defaultEffects }
+            }
+
+            Behavior on scale {
+                Anim { type: Motion.fastSpatial }
+            }
+
+            Behavior on color {
+                CAnim { type: Motion.defaultEffects }
+            }
         }
 
         Row {
@@ -239,12 +270,25 @@ Rectangle {
             Rectangle {
                 width: 142
                 height: 48
-                radius: 18
+                radius: submitMouse.pressed ? 12 : 18
+                scale: submitMouse.pressed ? 0.94 : 1
                 color: submitMouse.pressed ? Theme.colorPrimaryPressed : Theme.colorPrimary
                 opacity: AuthService.busy ? 0.65 : 1
 
+                Behavior on radius {
+                    Anim { type: Motion.defaultEffects }
+                }
+
+                Behavior on scale {
+                    Anim { type: Motion.fastSpatial }
+                }
+
                 Behavior on color {
-                    ColorAnimation { duration: Theme.durationShort }
+                    CAnim { type: Motion.defaultEffects }
+                }
+
+                Behavior on opacity {
+                    Anim { type: Motion.defaultEffects }
                 }
 
                 Text {
@@ -263,6 +307,7 @@ Rectangle {
 
                     anchors.fill: parent
                     enabled: !AuthService.busy
+                    hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     onClicked: root.submit()
                 }
