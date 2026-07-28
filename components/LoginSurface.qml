@@ -251,7 +251,6 @@ Rectangle {
 
             width: parent.width
             visible: !root.defaultUser
-            opacity: root.fieldsProgress
             revealProgress: root.fieldsProgress
             transform: Translate {
                 y: (1 - root.fieldsProgress) * 52
@@ -265,7 +264,6 @@ Rectangle {
             id: passwordField
 
             width: parent.width
-            opacity: root.fieldsProgress
             revealProgress: root.fieldsProgress
             transform: Translate {
                 y: (1 - root.fieldsProgress) * 64
