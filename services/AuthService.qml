@@ -4,6 +4,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Greetd
 import QtQuick
+import "../design"
 import "../i18n"
 
 Singleton {
@@ -18,6 +19,7 @@ Singleton {
     property bool awaitingResponse: false
     property bool echoResponse: false
     property bool markerPending: false
+    property bool launching: false
 
     readonly property string launchMarkerPath: `${Quickshell.env("XDG_RUNTIME_DIR") || "/tmp"}/caelestia-greeter-launch-requested`
     readonly property bool previewMode: {
@@ -68,8 +70,10 @@ Singleton {
         root.busy = false;
         root.awaitingResponse = false;
         root.markerPending = false;
+        root.launching = false;
         root.statusMessage = "";
         root.errorMessage = "";
+        launchDelay.stop();
 
         if (launchMarkerProcess.running)
             launchMarkerProcess.running = false;
@@ -80,6 +84,7 @@ Singleton {
     function requestSessionLaunch() {
         if (!root.launchCommand.length) {
             root.busy = false;
+            root.launching = false;
             root.errorMessage = I18n.t("auth.missingCommand");
             return;
         }
@@ -98,6 +103,7 @@ Singleton {
             root.markerPending = false;
             if (exitCode !== 0) {
                 root.busy = false;
+                root.launching = false;
                 root.statusMessage = "";
                 root.errorMessage = I18n.t("auth.handoffFailed");
                 return;
@@ -105,6 +111,13 @@ Singleton {
 
             Greetd.launch(root.launchCommand, [], true);
         }
+    }
+
+    Timer {
+        id: launchDelay
+
+        interval: Motion.duration(Motion.fastSpatial)
+        onTriggered: root.requestSessionLaunch()
     }
 
     Timer {
@@ -151,19 +164,22 @@ Singleton {
             root.busy = false;
             root.awaitingResponse = false;
             root.markerPending = false;
+            root.launching = false;
             root.statusMessage = "";
             root.errorMessage = message || I18n.t("auth.failed");
         }
 
         function onReadyToLaunch() {
             root.statusMessage = I18n.t("auth.startingSession");
-            root.requestSessionLaunch();
+            root.launching = true;
+            launchDelay.restart();
         }
 
         function onError(error) {
             root.busy = false;
             root.awaitingResponse = false;
             root.markerPending = false;
+            root.launching = false;
             root.statusMessage = "";
             root.errorMessage = error;
         }
