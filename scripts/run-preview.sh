@@ -2,101 +2,53 @@
 set -euo pipefail
 
 project_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-export LUMINA_GREETER_PREVIEW=1
+export CAELESTIA_GREETER_PREVIEW=1
 
-preview_user="${LUMINA_GREETER_USER:-$(id -un)}"
-export LUMINA_GREETER_USER="$preview_user"
+user="${CAELESTIA_GREETER_USER:-$(id -un)}"
+export CAELESTIA_GREETER_USER="$user"
 
-passwd_entry="$(getent passwd "$preview_user" || true)"
+passwd_entry="$(getent passwd "$user" || true)"
 if [[ -n "$passwd_entry" ]]; then
     IFS=: read -r _ _ _ _ gecos home_dir _ <<<"$passwd_entry"
-    display_name="${gecos%%,*}"
-    export LUMINA_GREETER_DISPLAY_NAME="${LUMINA_GREETER_DISPLAY_NAME:-${display_name:-$preview_user}}"
 else
-    home_dir="${HOME:-/home/$preview_user}"
-    export LUMINA_GREETER_DISPLAY_NAME="${LUMINA_GREETER_DISPLAY_NAME:-$preview_user}"
+    gecos="$user"
+    home_dir="${HOME:-/home/$user}"
 fi
 
-find_lumina_state_file() {
-    local candidate newest="" newest_mtime=0 mtime
+export CAELESTIA_GREETER_DISPLAY_NAME="${CAELESTIA_GREETER_DISPLAY_NAME:-${gecos%%,*}}"
+export CAELESTIA_GREETER_STATE_DIR="${CAELESTIA_GREETER_STATE_DIR:-$home_dir/.local/state/caelestia}"
+
+if [[ -z "${CAELESTIA_GREETER_GOOGLE_SANS_FLEX_SOURCE:-}" ]]; then
+    font_name="GoogleSansFlex-VariableFont_GRAD,ROND,opsz,slnt,wdth,wght.ttf"
+    config_home="${XDG_CONFIG_HOME:-$home_dir/.config}"
 
     for candidate in \
-        "${LUMINA_SHELL_STATE_PATH:-}" \
-        "$home_dir"/.local/state/quickshell/by-shell/*/lumina-state.json \
-        "$home_dir"/.local/state/quickshell/lumina-shell/lumina-state.json \
-        "$home_dir"/.local/state/lumina-shell/lumina-state.json; do
-        [[ -n "$candidate" && -f "$candidate" && -r "$candidate" ]] || continue
-        mtime="$(stat -c %Y "$candidate" 2>/dev/null || printf '0')"
-        if (( mtime >= newest_mtime )); then
-            newest="$candidate"
-            newest_mtime="$mtime"
+        "$config_home/quickshell/caelestia/assets/google-sans-flex/$font_name" \
+        "$home_dir/.config/quickshell/caelestia/assets/google-sans-flex/$font_name" \
+        "/etc/xdg/quickshell/caelestia/assets/google-sans-flex/$font_name" \
+        "/usr/share/quickshell/caelestia/assets/google-sans-flex/$font_name"; do
+        if [[ -r "$candidate" && -f "$candidate" ]]; then
+            export CAELESTIA_GREETER_GOOGLE_SANS_FLEX_SOURCE="$candidate"
+            break
         fi
     done
+fi
 
-    printf '%s' "$newest"
-}
-
-read_lumina_avatar_path() {
-    local state_file="$1"
-
-    [[ -n "$state_file" ]] || return
-
-    if command -v python3 >/dev/null 2>&1; then
-        python3 - "$state_file" <<'PY'
-import json
-import pathlib
-import sys
-import urllib.parse
-
-try:
-    with open(sys.argv[1], "r", encoding="utf-8") as handle:
-        state = json.load(handle)
-except (OSError, ValueError):
-    raise SystemExit(0)
-
-if state.get("dashboardUseUserAvatarImage", True) is False:
-    raise SystemExit(0)
-
-value = str(state.get("dashboardUserAvatarPath", "") or "").strip()
-if not value:
-    raise SystemExit(0)
-
-if value.startswith("file:"):
-    parsed = urllib.parse.urlparse(value)
-    value = urllib.parse.unquote(parsed.path)
-else:
-    value = urllib.parse.unquote(value)
-
-if value:
-    print(str(pathlib.Path(value).expanduser()))
-PY
-        return
-    fi
-
-    sed -n 's/.*"dashboardUserAvatarPath"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
-        "$state_file" | head -n 1
-}
-
-if [[ -z "${LUMINA_GREETER_AVATAR:-}" ]]; then
-    accounts_file="/var/lib/AccountsService/users/$preview_user"
-    configured_icon=""
+if [[ -z "${CAELESTIA_GREETER_AVATAR:-}" ]]; then
+    accounts_file="/var/lib/AccountsService/users/$user"
+    icon=""
     if [[ -r "$accounts_file" ]]; then
-        configured_icon="$(awk -F= '$1 == "Icon" { print substr($0, index($0, "=") + 1); exit }' "$accounts_file")"
+        icon="$(awk -F= '$1 == "Icon" { print substr($0, index($0, "=") + 1); exit }' "$accounts_file")"
     fi
-
-    lumina_state_file="$(find_lumina_state_file)"
-    lumina_avatar="$(read_lumina_avatar_path "$lumina_state_file" || true)"
 
     for candidate in \
-        "$configured_icon" \
-        "/var/lib/AccountsService/icons/$preview_user" \
+        "$icon" \
+        "/var/lib/AccountsService/icons/$user" \
         "$home_dir/.face.icon" \
-        "$home_dir/.face" \
-        "$lumina_avatar"; do
-        [[ -n "$candidate" ]] || continue
-        candidate_path="${candidate#file://}"
-        if [[ -f "$candidate_path" && -r "$candidate_path" ]]; then
-            export LUMINA_GREETER_AVATAR="$candidate_path"
+        "$home_dir/.face"; do
+        candidate="${candidate#file://}"
+        if [[ -n "$candidate" && -r "$candidate" && -f "$candidate" ]]; then
+            export CAELESTIA_GREETER_AVATAR="$candidate"
             break
         fi
     done

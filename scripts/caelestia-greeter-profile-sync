@@ -1,0 +1,187 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+runtime_dir="${CAELESTIA_GREETER_RUNTIME_DIR:-/run/caelestia-greeter}"
+cache_dir="${CAELESTIA_GREETER_CACHE_DIR:-/var/cache/caelestia-greeter}"
+state_cache="$cache_dir/state"
+profile_file="$runtime_dir/profile.env"
+service_user="${CAELESTIA_GREETER_SERVICE_USER:-greeter}"
+service_group="$(id -gn "$service_user")"
+
+install -d -m 0755 "$runtime_dir" "$cache_dir" "$state_cache/wallpaper"
+install -d -m 0700 -o "$service_user" -g "$service_group" \
+    "$cache_dir/runtime-$service_user"
+
+detect_login_user() {
+    local uid_min uid_max name password uid gid gecos home shell
+    local selected="" selected_uid=""
+
+    uid_min="$(awk '$1 == "UID_MIN" { print $2; exit }' /etc/login.defs 2>/dev/null || true)"
+    uid_max="$(awk '$1 == "UID_MAX" { print $2; exit }' /etc/login.defs 2>/dev/null || true)"
+    uid_min="${uid_min:-1000}"
+    uid_max="${uid_max:-60000}"
+
+    while IFS=: read -r name password uid gid gecos home shell; do
+        [[ "$uid" =~ ^[0-9]+$ ]] || continue
+        (( uid >= uid_min && uid <= uid_max )) || continue
+        [[ "$name" != "nobody" && "$name" != "$service_user" ]] || continue
+        [[ ! "$shell" =~ (nologin|false)$ ]] || continue
+
+        if [[ -z "$selected" ]] || (( uid < selected_uid )); then
+            selected="$name"
+            selected_uid="$uid"
+        fi
+    done < <(getent passwd)
+
+    printf '%s' "$selected"
+}
+
+trim() {
+    local value="$1"
+    value="${value#"${value%%[![:space:]]*}"}"
+    value="${value%"${value##*[![:space:]]}"}"
+    printf '%s' "$value"
+}
+
+copy_asset() {
+    local source="$1" target_base="$2" extension target
+    [[ -n "$source" && -r "$source" && -f "$source" ]] || return 1
+
+    extension="${source##*.}"
+    extension="${extension,,}"
+    case "$extension" in
+        png|jpg|jpeg|webp|bmp|gif|svg|avif) ;;
+        *) extension="img" ;;
+    esac
+
+    target="$target_base.$extension"
+    rm -f "$target_base" "$target_base".*
+    install -m 0644 "$source" "$target.tmp"
+    mv -f "$target.tmp" "$target"
+    printf '%s' "$target"
+}
+
+user="${CAELESTIA_GREETER_USER:-}"
+if [[ -z "$user" || "$user" == "$service_user" || "$user" == "root" ]]; then
+    user="$(detect_login_user)"
+fi
+
+if [[ -z "$user" ]]; then
+    rm -f "$profile_file"
+    printf 'Caelestia Greeter: no login user found.\n' >&2
+    exit 0
+fi
+
+passwd_entry="$(getent passwd "$user" || true)"
+if [[ -n "$passwd_entry" ]]; then
+    IFS=: read -r _ _ _ _ gecos home_dir _ <<<"$passwd_entry"
+else
+    gecos="$user"
+    home_dir="/home/$user"
+fi
+
+accounts_file="/var/lib/AccountsService/users/$user"
+real_name=""
+icon=""
+if [[ -r "$accounts_file" ]]; then
+    real_name="$(awk -F= '$1 == "RealName" { print substr($0, index($0, "=") + 1); exit }' "$accounts_file")"
+    icon="$(awk -F= '$1 == "Icon" { print substr($0, index($0, "=") + 1); exit }' "$accounts_file")"
+fi
+
+display_name="$(trim "$real_name")"
+display_name="${display_name:-$(trim "${gecos%%,*}")}"
+display_name="${display_name:-$user}"
+
+avatar_cache=""
+for candidate in \
+    "$icon" \
+    "/var/lib/AccountsService/icons/$user" \
+    "$home_dir/.face.icon" \
+    "$home_dir/.face"; do
+    candidate="${candidate#file://}"
+    if avatar_cache="$(copy_asset "$candidate" "$cache_dir/avatar-$user" 2>/dev/null)"; then
+        break
+    fi
+done
+
+shell_config_source="${CAELESTIA_GREETER_SHELL_CONFIG_SOURCE:-$home_dir/.config/caelestia/shell.json}"
+shell_config_cache=""
+if [[ -r "$shell_config_source" && -f "$shell_config_source" ]]; then
+    shell_config_cache="$cache_dir/shell.json"
+    install -m 0644 "$shell_config_source" "$shell_config_cache.tmp"
+    mv -f "$shell_config_cache.tmp" "$shell_config_cache"
+else
+    rm -f "$cache_dir/shell.json"
+fi
+
+font_name="GoogleSansFlex-VariableFont_GRAD,ROND,opsz,slnt,wdth,wght.ttf"
+font_source="${CAELESTIA_GREETER_GOOGLE_SANS_FLEX_SOURCE:-}"
+font_cache=""
+if [[ -z "$font_source" ]]; then
+    for candidate in \
+        "$home_dir/.config/quickshell/caelestia/assets/google-sans-flex/$font_name" \
+        "/etc/xdg/quickshell/caelestia/assets/google-sans-flex/$font_name" \
+        "/usr/share/quickshell/caelestia/assets/google-sans-flex/$font_name"; do
+        if [[ -r "$candidate" && -f "$candidate" ]]; then
+            font_source="$candidate"
+            break
+        fi
+    done
+fi
+
+if [[ -n "$font_source" && -r "$font_source" && -f "$font_source" ]]; then
+    font_cache="$cache_dir/$font_name"
+    install -m 0644 "$font_source" "$font_cache.tmp"
+    mv -f "$font_cache.tmp" "$font_cache"
+else
+    rm -f "$cache_dir/$font_name"
+fi
+
+source_state="${CAELESTIA_GREETER_SOURCE_STATE_DIR:-$home_dir/.local/state/caelestia}"
+scheme_source="${CAELESTIA_GREETER_SCHEME_SOURCE:-$source_state/scheme.json}"
+scheme_cache=""
+if [[ -r "$scheme_source" && -f "$scheme_source" ]]; then
+    scheme_cache="$state_cache/scheme.json"
+    install -m 0644 "$scheme_source" "$scheme_cache.tmp"
+    mv -f "$scheme_cache.tmp" "$scheme_cache"
+else
+    rm -f "$state_cache/scheme.json"
+fi
+
+wallpaper_source="${CAELESTIA_GREETER_WALLPAPER_SOURCE:-}"
+if [[ -z "$wallpaper_source" && -r "$source_state/wallpaper/path.txt" ]]; then
+    wallpaper_source="$(head -n 1 "$source_state/wallpaper/path.txt" | tr -d '\r')"
+fi
+
+wallpaper_cache=""
+if wallpaper_cache="$(copy_asset "$wallpaper_source" "$cache_dir/wallpaper" 2>/dev/null)"; then
+    printf '%s\n' "$wallpaper_cache" >"$state_cache/wallpaper/path.txt"
+    chmod 0644 "$state_cache/wallpaper/path.txt"
+else
+    rm -f "$state_cache/wallpaper/path.txt" "$cache_dir/wallpaper" "$cache_dir/wallpaper".*
+fi
+
+profile_tmp="$profile_file.tmp"
+{
+    printf 'CAELESTIA_GREETER_USER=%q\n' "$user"
+    printf 'CAELESTIA_GREETER_DISPLAY_NAME=%q\n' "$display_name"
+    printf 'CAELESTIA_GREETER_STATE_DIR=%q\n' "$state_cache"
+    if [[ -n "$avatar_cache" ]]; then
+        printf 'CAELESTIA_GREETER_AVATAR=%q\n' "$avatar_cache"
+    fi
+    if [[ -n "$shell_config_cache" ]]; then
+        printf 'CAELESTIA_GREETER_SHELL_CONFIG_PATH=%q\n' "$shell_config_cache"
+    fi
+    if [[ -n "$font_cache" ]]; then
+        printf 'CAELESTIA_GREETER_GOOGLE_SANS_FLEX_SOURCE=%q\n' "$font_cache"
+    fi
+    if [[ -n "$scheme_cache" ]]; then
+        printf 'CAELESTIA_GREETER_SCHEME_PATH=%q\n' "$scheme_cache"
+    fi
+    if [[ -n "$wallpaper_cache" ]]; then
+        printf 'CAELESTIA_GREETER_WALLPAPER=%q\n' "$wallpaper_cache"
+    fi
+} >"$profile_tmp"
+
+chmod 0644 "$profile_tmp"
+mv -f "$profile_tmp" "$profile_file"

@@ -7,8 +7,13 @@ import QtQuick
 Singleton {
     id: root
 
+    function env(name) {
+        return Quickshell.env(name) || "";
+    }
+
     FileView {
         id: defaultsFile
+
         path: Qt.resolvedUrl("defaults.json")
         blockLoading: true
         watchChanges: true
@@ -19,74 +24,90 @@ Singleton {
             const parsed = JSON.parse(defaultsFile.text());
             return parsed && typeof parsed === "object" ? parsed : ({});
         } catch (error) {
-            console.warn("Lumina Greeter: invalid config/defaults.json:", error);
+            console.warn("Caelestia Greeter: invalid config/defaults.json:", error);
             return ({});
         }
     }
 
-    readonly property string clockLayout: {
-        const override = Quickshell.env("LUMINA_GREETER_CLOCK_LAYOUT") || "";
-        if (override === "stacked" || override === "horizontal")
+    readonly property string homeDir: env("HOME")
+    readonly property string configHome: env("XDG_CONFIG_HOME")
+        || (homeDir ? `${homeDir}/.config` : "")
+    readonly property string shellConfigPath: env("CAELESTIA_GREETER_SHELL_CONFIG_PATH")
+        || (configHome ? `${configHome}/caelestia/shell.json` : "")
+    readonly property string googleSansFlexSource: resolveSource(
+        env("CAELESTIA_GREETER_GOOGLE_SANS_FLEX_SOURCE")
+            || "/etc/xdg/quickshell/caelestia/assets/google-sans-flex/GoogleSansFlex-VariableFont_GRAD,ROND,opsz,slnt,wdth,wght.ttf"
+    )
+
+    readonly property string stateDir: {
+        const override = env("CAELESTIA_GREETER_STATE_DIR");
+        if (override)
             return override;
 
-        return values.clockLayout === "horizontal" ? "horizontal" : "stacked";
+        const stateHome = env("XDG_STATE_HOME") || (homeDir ? `${homeDir}/.local/state` : "");
+        return stateHome ? `${stateHome}/caelestia` : "";
     }
 
-    readonly property string defaultUser: {
-        const override = Quickshell.env("LUMINA_GREETER_USER") || "";
-        return override.length > 0 ? override : (values.defaultUser || "");
+    readonly property string schemePath: env("CAELESTIA_GREETER_SCHEME_PATH")
+        || (stateDir ? `${stateDir}/scheme.json` : "")
+
+    FileView {
+        id: wallpaperStateFile
+
+        path: root.stateDir ? `${root.stateDir}/wallpaper/path.txt` : ""
+        blockLoading: true
+        watchChanges: true
+        printErrors: false
     }
 
-    readonly property string displayName: {
-        const override = Quickshell.env("LUMINA_GREETER_DISPLAY_NAME") || "";
-        if (override.length > 0)
-            return override;
-        if (typeof values.displayName === "string" && values.displayName.length > 0)
-            return values.displayName;
-        return defaultUser;
-    }
-
-    readonly property string avatarSource: {
-        const override = Quickshell.env("LUMINA_GREETER_AVATAR") || "";
-        const configured = override.length > 0
-            ? override
-            : (values.avatar || "");
-
-        if (configured.length === 0)
+    readonly property string currentWallpaper: {
+        try {
+            return wallpaperStateFile.text().trim();
+        } catch (error) {
             return "";
-        if (configured.startsWith("file:") || configured.startsWith("qrc:"))
-            return configured;
-        if (configured.startsWith("/"))
-            return "file://" + configured;
-
-        return Qt.resolvedUrl("../" + configured);
+        }
     }
 
-    readonly property string language: {
-        const override = Quickshell.env("LUMINA_GREETER_LANGUAGE") || "";
-        return override.length > 0 ? override : (values.language || "system");
-    }
+    readonly property string defaultUser: env("CAELESTIA_GREETER_USER")
+        || values.defaultUser
+        || ""
+
+    readonly property string displayName: env("CAELESTIA_GREETER_DISPLAY_NAME")
+        || values.displayName
+        || defaultUser
+
+    readonly property string avatarSource: resolveSource(
+        env("CAELESTIA_GREETER_AVATAR") || values.avatar || ""
+    )
+
+    readonly property string language: env("CAELESTIA_GREETER_LANGUAGE")
+        || values.language
+        || "system"
 
     readonly property bool loginStartsOpen: values.loginStartsOpen !== false
 
-    readonly property var sessions: {
-        if (Array.isArray(values.sessions) && values.sessions.length > 0)
-            return values.sessions;
-
-        return [{ "name": "Niri", "command": ["niri-session"] }];
-    }
+    readonly property var sessions: Array.isArray(values.sessions) && values.sessions.length > 0
+        ? values.sessions
+        : [{ "name": "Caelestia", "command": ["/usr/local/bin/caelestia-session"] }]
 
     readonly property string wallpaperSource: {
-        const override = Quickshell.env("LUMINA_GREETER_WALLPAPER") || "";
-        const configured = override.length > 0
-            ? override
-            : (values.wallpaper || "assets/default-wallpaper.svg");
+        let configured = env("CAELESTIA_GREETER_WALLPAPER")
+            || values.wallpaper
+            || "caelestia";
 
-        if (configured.startsWith("file:") || configured.startsWith("qrc:"))
-            return configured;
-        if (configured.startsWith("/"))
-            return "file://" + configured;
+        if (configured === "caelestia")
+            configured = currentWallpaper;
 
-        return Qt.resolvedUrl("../" + configured);
+        return resolveSource(configured || "assets/default-wallpaper.svg");
+    }
+
+    function resolveSource(path) {
+        if (!path)
+            return "";
+        if (path.startsWith("file:") || path.startsWith("qrc:"))
+            return path;
+        if (path.startsWith("/"))
+            return `file://${path}`;
+        return Qt.resolvedUrl(`../${path}`);
     }
 }

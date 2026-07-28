@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if command -v start-hyprland >/dev/null 2>&1; then
+    exec start-hyprland
+fi
+
+exec /usr/bin/Hyprland

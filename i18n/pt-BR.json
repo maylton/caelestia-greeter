@@ -1,13 +1,9 @@
 {
   "date": {
-    "pattern": "dddd, d 'de' MMMM"
+    "pattern": "dddd • d MMM"
   },
   "idle": {
     "prompt": "Clique ou pressione uma tecla para entrar"
-  },
-  "clock": {
-    "stacked": "Relógio: vertical",
-    "horizontal": "Relógio: horizontal"
   },
   "power": {
     "restart": "Reiniciar",
@@ -18,11 +14,11 @@
     "description": "Demonstração local — nenhuma sessão será iniciada"
   },
   "login": {
-    "welcome": "Bem-vindo ao Lumina",
+    "welcome": "Bem-vindo ao Caelestia",
     "welcomeUser": "Bem-vindo, %1",
-    "subtitle": "Entre para iniciar sua sessão",
+    "subtitle": "Entre para iniciar sua sessão do Caelestia",
     "username": "Nome de usuário",
-    "password": "Senha",
+    "password": "Digite sua senha",
     "session": "Sessão",
     "back": "Voltar",
     "signIn": "Entrar",

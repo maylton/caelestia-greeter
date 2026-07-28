@@ -84,7 +84,7 @@ Singleton {
             const parsed = JSON.parse(contents);
             return parsed && typeof parsed === "object" ? parsed : ({});
         } catch (parseError) {
-            console.warn("Lumina Greeter: invalid translation file for", languageName, parseError);
+            console.warn("Caelestia Greeter: invalid translation file for", languageName, parseError);
             return ({});
         }
     }

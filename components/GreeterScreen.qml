@@ -2,7 +2,7 @@ import Quickshell
 import Quickshell.Wayland
 import QtQuick
 import "../config"
-import "../design/Tokens.js" as Tokens
+import "../design"
 import "../i18n"
 import "../services"
 
@@ -12,7 +12,10 @@ PanelWindow {
     required property var modelData
     readonly property bool interactiveScreen: modelData === Quickshell.screens[0]
     property bool loginOpen: Config.loginStartsOpen
-    property string clockLayout: Config.clockLayout
+    property real loginSpatial: loginOpen ? 1 : 0
+    property real loginEffects: loginOpen ? 1 : 0
+    property real exitSpatial: AuthService.launching ? 1 : 0
+    property real exitEffects: AuthService.launching ? 1 : 0
 
     screen: modelData
     color: "transparent"
@@ -30,15 +33,36 @@ PanelWindow {
     WlrLayershell.keyboardFocus: interactiveScreen
         ? WlrKeyboardFocus.Exclusive
         : WlrKeyboardFocus.None
-    WlrLayershell.namespace: "lumina-greeter"
+    WlrLayershell.namespace: "caelestia-greeter"
+
+    Behavior on loginSpatial {
+        Anim { type: Motion.defaultSpatial }
+    }
+
+    Behavior on loginEffects {
+        Anim { type: Motion.defaultEffects }
+    }
+
+    Behavior on exitSpatial {
+        Anim { type: Motion.defaultSpatial }
+    }
+
+    Behavior on exitEffects {
+        Anim { type: Motion.slowEffects }
+    }
 
     Item {
         id: scene
+
+        property real backgroundProgress: 0
+        property real spatialProgress: 0
+        property real effectProgress: 0
+
         anchors.fill: parent
         focus: window.interactiveScreen
 
         Keys.onPressed: event => {
-            if (!window.interactiveScreen)
+            if (!window.interactiveScreen || AuthService.launching)
                 return;
 
             if (event.key === Qt.Key_Escape && window.loginOpen) {
@@ -54,66 +78,133 @@ PanelWindow {
             }
         }
 
+        ParallelAnimation {
+            running: true
+
+            Anim {
+                target: scene
+                property: "backgroundProgress"
+                from: 0
+                to: 1
+                type: Motion.standardLarge
+            }
+
+            Anim {
+                target: scene
+                property: "spatialProgress"
+                from: 0
+                to: 1
+                type: Motion.defaultSpatial
+            }
+
+            SequentialAnimation {
+                PauseAnimation { duration: 120 }
+
+                Anim {
+                    target: scene
+                    property: "effectProgress"
+                    from: 0
+                    to: 1
+                    type: Motion.slowEffects
+                }
+            }
+        }
+
         Image {
+            id: wallpaper
+
             anchors.fill: parent
             source: Config.wallpaperSource
             fillMode: Image.PreserveAspectCrop
             asynchronous: true
             cache: true
+            opacity: scene.backgroundProgress
+            scale: 1.10
+                - scene.spatialProgress * 0.10
+                + window.exitSpatial * 0.08
         }
 
         Rectangle {
             anchors.fill: parent
+            opacity: scene.backgroundProgress
+
             gradient: Gradient {
-                GradientStop { position: 0.0; color: "#30121a2d" }
-                GradientStop { position: 0.52; color: "#160a1220" }
-                GradientStop { position: 1.0; color: "#75101420" }
+                GradientStop { position: 0.0; color: Theme.scrimTop }
+                GradientStop { position: 0.52; color: Theme.scrimMiddle }
+                GradientStop { position: 1.0; color: Theme.scrimBottom }
             }
         }
 
         Rectangle {
             anchors.fill: parent
-            color: window.loginOpen ? "#29030a12" : "transparent"
-
-            Behavior on color {
-                ColorAnimation { duration: Tokens.durationMedium }
-            }
+            color: Qt.alpha(
+                Theme.loginScrim,
+                Theme.loginScrim.a * window.loginEffects * scene.effectProgress
+            )
         }
 
         MouseArea {
             anchors.fill: parent
-            enabled: window.interactiveScreen && !window.loginOpen
+            enabled: window.interactiveScreen
+                && !window.loginOpen
+                && !AuthService.launching
             cursorShape: Qt.PointingHandCursor
             onClicked: window.loginOpen = true
         }
 
         ExpressiveClock {
             id: clock
-            layoutMode: window.clockLayout
+
+            readonly property real closedY: Math.round((scene.height - height) / 2 - 26)
+            readonly property real openY: Math.max(
+                76,
+                Math.min(150, scene.height * 0.15)
+            )
+
             baseSize: Math.max(112, Math.min(scene.width * 0.16, scene.height * 0.25))
             x: Math.round((scene.width - width) / 2)
-            y: window.loginOpen
-                ? Math.max(52, scene.height * 0.10)
-                : Math.round((scene.height - height) / 2 - 26)
-
-            Behavior on y {
-                NumberAnimation {
-                    duration: Tokens.durationLong
-                    easing.type: Easing.OutBack
-                    easing.overshoot: 1.04
-                }
-            }
+            y: closedY
+                + (openY - closedY) * window.loginSpatial
+                + (1 - scene.spatialProgress) * 86
+                - window.exitSpatial * 34
+            opacity: scene.effectProgress * (1 - window.exitEffects)
+            scale: (0.54 + scene.spatialProgress * 0.46)
+                * (1 - window.loginSpatial * 0.02)
+                * (1 - window.exitSpatial * 0.30)
+            rotation: -6 * (1 - scene.spatialProgress)
+                + window.exitSpatial * 4
+            transformOrigin: Item.Center
         }
 
         LoginSurface {
             id: loginSurface
+
+            readonly property real targetY: Math.min(
+                scene.height - height - 64,
+                clock.y + clock.height + 60
+            )
+
             visible: window.interactiveScreen
             width: Math.min(540, scene.width - 40)
             x: Math.round((scene.width - width) / 2)
-            y: Math.min(scene.height - height - 84, clock.y + clock.height + 34)
-            opacity: window.loginOpen ? 1 : 0
-            scale: window.loginOpen ? 1 : 0.94
-            enabled: window.loginOpen
+            y: targetY
+                + (1 - scene.spatialProgress) * 116
+                + (1 - window.loginSpatial) * 72
+                + window.exitSpatial * 94
+            opacity: scene.effectProgress
+                * window.loginEffects
+                * (1 - window.exitEffects)
+            scale: (0.68 + scene.spatialProgress * 0.32)
+                * (0.88 + window.loginSpatial * 0.12)
+                * (1 - window.exitSpatial * 0.44)
+            rotation: -5 * (1 - scene.spatialProgress)
+                - 2 * (1 - window.loginSpatial)
+                + window.exitSpatial * 7
+            transformOrigin: Item.Center
+            presentationProgress: scene.spatialProgress
+                * window.loginSpatial
+                * (1 - window.exitSpatial)
+            enabled: window.loginOpen && !AuthService.launching
             active: window.loginOpen
             defaultUser: Config.defaultUser
             displayName: Config.displayName
@@ -125,46 +216,35 @@ PanelWindow {
                 window.loginOpen = false;
                 scene.forceActiveFocus();
             }
-
-            Behavior on opacity {
-                NumberAnimation { duration: Tokens.durationMedium }
-            }
-
-            Behavior on scale {
-                NumberAnimation {
-                    duration: Tokens.durationLong
-                    easing.type: Easing.OutBack
-                    easing.overshoot: 1.08
-                }
-            }
         }
 
         Text {
-            visible: window.interactiveScreen && !window.loginOpen
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: 48
+            anchors.bottomMargin: 48 - (1 - window.loginSpatial) * 12
             text: I18n.t("idle.prompt")
-            color: Tokens.colorTextMuted
-            font.family: Tokens.fontBody
+            color: Theme.colorTextMuted
+            font.family: Theme.fontBody
             font.pixelSize: 14
             font.weight: Font.Medium
+            opacity: scene.effectProgress
+                * (1 - window.loginEffects)
+                * (1 - window.exitEffects)
+            scale: 0.82 + (1 - window.loginSpatial) * 0.18
         }
 
         Row {
-            visible: window.interactiveScreen
             anchors.right: parent.right
             anchors.bottom: parent.bottom
             anchors.margins: 24
             spacing: 10
-
-            ActionChip {
-                text: window.clockLayout === "stacked"
-                    ? I18n.t("clock.stacked")
-                    : I18n.t("clock.horizontal")
-                onClicked: window.clockLayout = window.clockLayout === "stacked"
-                    ? "horizontal"
-                    : "stacked"
+            visible: window.interactiveScreen
+            enabled: !AuthService.launching
+            opacity: scene.effectProgress * (1 - window.exitEffects)
+            scale: 0.84 + scene.spatialProgress * 0.16
+            transform: Translate {
+                y: (1 - scene.spatialProgress) * 42
+                    + window.exitSpatial * 32
             }
 
             ActionChip {
@@ -180,22 +260,30 @@ PanelWindow {
         }
 
         Rectangle {
-            visible: AuthService.previewMode && window.interactiveScreen
             anchors.left: parent.left
             anchors.bottom: parent.bottom
             anchors.margins: 24
             width: previewLabel.implicitWidth + 28
             height: 38
             radius: height / 2
-            color: Tokens.colorSurfaceContainer
-            border.color: Tokens.colorOutline
+            color: Theme.colorSurfaceContainer
+            border.color: Theme.colorOutline
+            visible: AuthService.previewMode && window.interactiveScreen
+            opacity: scene.effectProgress * (1 - window.exitEffects)
+            scale: (0.72 + scene.spatialProgress * 0.28)
+                * (1 - window.exitSpatial * 0.20)
+            transform: Translate {
+                y: (1 - scene.spatialProgress) * 34
+                    + window.exitSpatial * 26
+            }
 
             Text {
                 id: previewLabel
+
                 anchors.centerIn: parent
                 text: I18n.t("preview.badge")
-                color: Tokens.colorText
-                font.family: Tokens.fontBody
+                color: Theme.colorText
+                font.family: Theme.fontBody
                 font.pixelSize: 13
                 font.weight: Font.DemiBold
             }

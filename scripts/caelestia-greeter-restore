@@ -1,0 +1,111 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+IFS=$'\n\t'
+
+BACKUP_BASE="/var/backups/caelestia-greeter"
+STATE_FILE="/var/lib/caelestia-greeter-install.env"
+ASSUME_YES=0
+BACKUP_DIR=""
+
+usage() {
+    cat <<'USAGE'
+Restore the login manager that was active before Caelestia Greeter was installed.
+
+Usage:
+  sudo caelestia-greeter-restore [BACKUP_DIRECTORY] [--yes]
+
+When BACKUP_DIRECTORY is omitted, the installer state or newest backup is used.
+The current graphical login manager is not stopped immediately; changes apply
+on the next boot.
+USAGE
+}
+
+while (($#)); do
+    case "$1" in
+        --yes)
+            ASSUME_YES=1
+            shift
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            [[ -z "$BACKUP_DIR" ]] || { printf 'Only one backup directory may be supplied.\n' >&2; exit 2; }
+            BACKUP_DIR="$1"
+            shift
+            ;;
+    esac
+done
+
+if ((EUID != 0)); then
+    args=()
+    [[ -n "$BACKUP_DIR" ]] && args+=("$BACKUP_DIR")
+    ((ASSUME_YES)) && args+=(--yes)
+    exec sudo -- "$0" "${args[@]}"
+fi
+
+if [[ -z "$BACKUP_DIR" && -r "$STATE_FILE" ]]; then
+    source "$STATE_FILE"
+    BACKUP_DIR="${CAELESTIA_GREETER_BACKUP:-}"
+fi
+
+if [[ -z "$BACKUP_DIR" && -d "$BACKUP_BASE" ]]; then
+    BACKUP_DIR="$(find "$BACKUP_BASE" -mindepth 1 -maxdepth 1 -type d -printf '%p\n' 2>/dev/null | sort -r | head -n 1)"
+fi
+
+[[ -n "$BACKUP_DIR" && -d "$BACKUP_DIR" ]] || { printf 'No Caelestia Greeter backup was found.\n' >&2; exit 1; }
+[[ -r "$BACKUP_DIR/metadata.env" ]] || { printf 'Invalid backup: metadata.env is missing.\n' >&2; exit 1; }
+[[ -d "$BACKUP_DIR/files" ]] || { printf 'Invalid backup: files directory is missing.\n' >&2; exit 1; }
+
+source "$BACKUP_DIR/metadata.env"
+previous_dm_service="${previous_dm_service:-}"
+previous_dm_label="${previous_dm_label:-${previous_dm_service:-none}}"
+
+printf '\n\033[1mCaelestia Greeter restore\033[0m\n\n'
+printf 'Backup: %s\n' "$BACKUP_DIR"
+printf 'Login manager to restore: %s\n\n' "$previous_dm_label"
+printf '%s\n' 'The restore will:'
+printf '%s\n' '  1. disable greetd for the next boot;'
+printf '%s\n' '  2. remove files installed by Caelestia Greeter;'
+printf '%s\n' '  3. restore the backed-up login-manager configuration and PAM files;'
+printf '%s\n' '  4. re-enable the previous login manager for the next boot.'
+printf '%s\n\n' 'The current graphical session will not be stopped.'
+
+if ((ASSUME_YES == 0)); then
+    read -r -p 'Type RESTORE to continue: ' confirmation
+    [[ "$confirmation" == "RESTORE" || "$confirmation" == "RESTAURAR" ]] || {
+        printf 'Restore cancelled.\n'
+        exit 0
+    }
+fi
+
+systemctl disable greetd.service >/dev/null 2>&1 || true
+
+rm -rf \
+    /etc/xdg/quickshell/caelestia-greeter \
+    /etc/systemd/system/greetd.service.d/caelestia-greeter.conf \
+    /etc/greetd/caelestia-greeter-hyprland.conf \
+    /etc/greetd/config.toml \
+    /etc/pam.d/greetd \
+    /usr/local/bin/caelestia-greeter-session \
+    /usr/local/bin/caelestia-greeter-run \
+    /usr/local/bin/caelestia-greeter-compositor \
+    /usr/local/bin/caelestia-greeter-profile-sync \
+    /usr/local/bin/caelestia-greeter-restore \
+    /usr/local/bin/caelestia-session \
+    /var/cache/caelestia-greeter \
+    /run/caelestia-greeter \
+    /var/lib/caelestia-greeter-install.env
+
+cp -a -- "$BACKUP_DIR/files/." /
+systemctl daemon-reload
+
+if [[ -n "$previous_dm_service" && "$previous_dm_service" != "greetd.service" ]]; then
+    systemctl enable -f "$previous_dm_service"
+elif [[ "$previous_dm_service" == "greetd.service" ]]; then
+    systemctl enable -f greetd.service
+fi
+
+printf '\n\033[1;32mRestore completed.\033[0m\n'
+printf 'Reboot the computer to return to %s.\n' "$previous_dm_label"
