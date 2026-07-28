@@ -104,6 +104,16 @@ for candidate in \
     fi
 done
 
+shell_config_source="${CAELESTIA_GREETER_SHELL_CONFIG_SOURCE:-$home_dir/.config/caelestia/shell.json}"
+shell_config_cache=""
+if [[ -r "$shell_config_source" && -f "$shell_config_source" ]]; then
+    shell_config_cache="$cache_dir/shell.json"
+    install -m 0644 "$shell_config_source" "$shell_config_cache.tmp"
+    mv -f "$shell_config_cache.tmp" "$shell_config_cache"
+else
+    rm -f "$cache_dir/shell.json"
+fi
+
 source_state="${CAELESTIA_GREETER_SOURCE_STATE_DIR:-$home_dir/.local/state/caelestia}"
 scheme_source="${CAELESTIA_GREETER_SCHEME_SOURCE:-$source_state/scheme.json}"
 scheme_cache=""
@@ -135,6 +145,9 @@ profile_tmp="$profile_file.tmp"
     printf 'CAELESTIA_GREETER_STATE_DIR=%q\n' "$state_cache"
     if [[ -n "$avatar_cache" ]]; then
         printf 'CAELESTIA_GREETER_AVATAR=%q\n' "$avatar_cache"
+    fi
+    if [[ -n "$shell_config_cache" ]]; then
+        printf 'CAELESTIA_GREETER_SHELL_CONFIG_PATH=%q\n' "$shell_config_cache"
     fi
     if [[ -n "$scheme_cache" ]]; then
         printf 'CAELESTIA_GREETER_SCHEME_PATH=%q\n' "$scheme_cache"
