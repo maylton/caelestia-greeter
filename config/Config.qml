@@ -34,6 +34,10 @@ Singleton {
         || (homeDir ? `${homeDir}/.config` : "")
     readonly property string shellConfigPath: env("CAELESTIA_GREETER_SHELL_CONFIG_PATH")
         || (configHome ? `${configHome}/caelestia/shell.json` : "")
+    readonly property string googleSansFlexSource: resolveSource(
+        env("CAELESTIA_GREETER_GOOGLE_SANS_FLEX_SOURCE")
+            || "/etc/xdg/quickshell/caelestia/assets/google-sans-flex/GoogleSansFlex-VariableFont_GRAD,ROND,opsz,slnt,wdth,wght.ttf"
+    )
 
     readonly property string stateDir: {
         const override = env("CAELESTIA_GREETER_STATE_DIR");
