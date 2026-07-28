@@ -59,14 +59,6 @@ Singleton {
         }
     }
 
-    readonly property string clockLayout: {
-        const override = env("CAELESTIA_GREETER_CLOCK_LAYOUT");
-        if (override === "stacked" || override === "horizontal")
-            return override;
-
-        return values.clockLayout === "horizontal" ? "horizontal" : "stacked";
-    }
-
     readonly property string defaultUser: env("CAELESTIA_GREETER_USER")
         || values.defaultUser
         || ""
