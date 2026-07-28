@@ -156,7 +156,10 @@ PanelWindow {
             id: clock
 
             readonly property real closedY: Math.round((scene.height - height) / 2 - 26)
-            readonly property real openY: Math.max(52, scene.height * 0.10)
+            readonly property real openY: Math.max(
+                76,
+                Math.min(150, scene.height * 0.15)
+            )
 
             baseSize: Math.max(112, Math.min(scene.width * 0.16, scene.height * 0.25))
             x: Math.round((scene.width - width) / 2)
@@ -177,8 +180,8 @@ PanelWindow {
             id: loginSurface
 
             readonly property real targetY: Math.min(
-                scene.height - height - 84,
-                clock.y + clock.height + 34
+                scene.height - height - 64,
+                clock.y + clock.height + 60
             )
 
             visible: window.interactiveScreen
