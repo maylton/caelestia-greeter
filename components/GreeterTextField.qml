@@ -57,13 +57,11 @@ Rectangle {
             margins: 18
         }
         enabled: root.enabled
-        color: root.passwordMode ? "transparent" : Theme.colorText
-        selectionColor: root.passwordMode
-            ? "transparent"
-            : Theme.colorPrimaryContainer
-        selectedTextColor: root.passwordMode
-            ? "transparent"
-            : Theme.colorPrimaryContainerText
+        opacity: root.passwordMode ? 0 : 1
+        color: Theme.colorText
+        selectionColor: Theme.colorPrimaryContainer
+        selectedTextColor: Theme.colorPrimaryContainerText
+        horizontalAlignment: root.passwordMode ? TextInput.AlignHCenter : TextInput.AlignLeft
         font.family: Theme.fontBody
         font.pixelSize: 15
         echoMode: root.passwordMode ? TextInput.NoEcho : TextInput.Normal
@@ -117,6 +115,8 @@ Rectangle {
     }
 
     Text {
+        id: placeholder
+
         x: root.passwordMode
             ? Math.round((root.width - implicitWidth) / 2)
             : input.x
@@ -137,6 +137,43 @@ Rectangle {
 
         Behavior on scale {
             Anim { type: Motion.fastSpatial }
+        }
+    }
+
+    Rectangle {
+        id: passwordCaret
+
+        x: placeholder.x + placeholder.implicitWidth + 6
+        anchors.verticalCenter: parent.verticalCenter
+        width: 2
+        height: 20
+        radius: 1
+        color: Theme.colorPrimary
+        visible: root.passwordMode
+            && input.activeFocus
+            && input.text.length === 0
+
+        SequentialAnimation {
+            running: passwordCaret.visible
+            loops: Animation.Infinite
+
+            NumberAnimation {
+                target: passwordCaret
+                property: "opacity"
+                from: 1
+                to: 0.18
+                duration: 450
+                easing.type: Easing.InOutQuad
+            }
+
+            NumberAnimation {
+                target: passwordCaret
+                property: "opacity"
+                from: 0.18
+                to: 1
+                duration: 450
+                easing.type: Easing.InOutQuad
+            }
         }
     }
 }
