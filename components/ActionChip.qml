@@ -11,8 +11,8 @@ Rectangle {
 
     implicitWidth: label.implicitWidth + 28
     implicitHeight: 42
-    radius: mouse.pressed ? 12 : height / 2
-    scale: mouse.pressed ? 0.94 : 1
+    radius: mouse.pressed ? 10 : height / 2
+    scale: mouse.pressed ? 0.88 : mouse.containsMouse ? 1.035 : 1
     color: {
         if (!root.enabled)
             return Theme.colorDisabled;
