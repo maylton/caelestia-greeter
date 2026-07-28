@@ -12,6 +12,10 @@ Rectangle {
     property string avatarSource: ""
     property var sessions: []
     property bool active: true
+    property real presentationProgress: 1
+    property real headerProgress: 0
+    property real fieldsProgress: 0
+    property real actionsProgress: 0
     property int selectedSessionIndex: 0
     readonly property var selectedSession: sessions.length > 0
         ? sessions[Math.min(selectedSessionIndex, sessions.length - 1)]
@@ -26,7 +30,7 @@ Rectangle {
     signal closeRequested()
 
     implicitHeight: content.implicitHeight + 56
-    radius: Theme.radiusXL
+    radius: 48 - presentationProgress * 14
     color: Theme.colorSurface
     border.width: 1
     border.color: Theme.colorOutline
@@ -45,6 +49,18 @@ Rectangle {
         (root.defaultUser ? passwordField : usernameField).focusInput(Qt.ActiveWindowFocusReason);
     }
 
+    function resetReveal() {
+        revealAnimation.stop();
+        headerProgress = 0;
+        fieldsProgress = 0;
+        actionsProgress = 0;
+    }
+
+    function startReveal() {
+        resetReveal();
+        revealAnimation.start();
+    }
+
     function submit() {
         if (AuthService.awaitingResponse) {
             AuthService.provideResponse(passwordField.text);
@@ -60,8 +76,20 @@ Rectangle {
         passwordField.text = "";
     }
 
-    Component.onCompleted: root.focusInitialField()
-    onActiveChanged: root.focusInitialField()
+    Component.onCompleted: {
+        root.focusInitialField();
+        if (root.active)
+            root.startReveal();
+    }
+
+    onActiveChanged: {
+        root.focusInitialField();
+        if (root.active)
+            root.startReveal();
+        else
+            root.resetReveal();
+    }
+
     onDefaultUserChanged: root.focusInitialField()
 
     Behavior on color {
@@ -72,10 +100,46 @@ Rectangle {
         CAnim { type: Motion.slowEffects }
     }
 
+    ParallelAnimation {
+        id: revealAnimation
+
+        Anim {
+            target: root
+            property: "headerProgress"
+            from: 0
+            to: 1
+            type: Motion.fastSpatial
+        }
+
+        SequentialAnimation {
+            PauseAnimation { duration: 90 }
+
+            Anim {
+                target: root
+                property: "fieldsProgress"
+                from: 0
+                to: 1
+                type: Motion.defaultSpatial
+            }
+        }
+
+        SequentialAnimation {
+            PauseAnimation { duration: 190 }
+
+            Anim {
+                target: root
+                property: "actionsProgress"
+                from: 0
+                to: 1
+                type: Motion.fastSpatial
+            }
+        }
+    }
+
     Timer {
         id: initialFocusTimer
 
-        interval: 60
+        interval: 260
         repeat: false
         onTriggered: root.applyInitialFocus()
     }
@@ -101,8 +165,15 @@ Rectangle {
         spacing: 18
 
         Row {
+            id: profileHeader
+
             width: parent.width
             spacing: 16
+            opacity: root.headerProgress
+            scale: 0.74 + root.headerProgress * 0.26
+            transform: Translate {
+                y: (1 - root.headerProgress) * 42
+            }
 
             ClippingRectangle {
                 id: avatarFrame
@@ -113,6 +184,9 @@ Rectangle {
                 color: Theme.colorPrimaryContainer
                 border.width: 1
                 border.color: Theme.colorOutline
+                rotation: -180 * (1 - root.headerProgress)
+                scale: 0.34 + root.headerProgress * 0.66
+                transformOrigin: Item.Center
 
                 Image {
                     id: avatarImage
@@ -177,6 +251,11 @@ Rectangle {
 
             width: parent.width
             visible: !root.defaultUser
+            opacity: root.fieldsProgress
+            revealProgress: root.fieldsProgress
+            transform: Translate {
+                y: (1 - root.fieldsProgress) * 52
+            }
             placeholderText: I18n.t("login.username")
             enabled: visible && !AuthService.busy && !AuthService.awaitingResponse
             onAccepted: passwordField.focusInput(Qt.TabFocusReason)
@@ -186,6 +265,11 @@ Rectangle {
             id: passwordField
 
             width: parent.width
+            opacity: root.fieldsProgress
+            revealProgress: root.fieldsProgress
+            transform: Translate {
+                y: (1 - root.fieldsProgress) * 64
+            }
             placeholderText: AuthService.prompt || I18n.t("login.password")
             passwordMode: !AuthService.echoResponse
             enabled: !AuthService.busy
@@ -196,6 +280,11 @@ Rectangle {
             width: parent.width
             spacing: 9
             visible: root.sessions.length > 1
+            opacity: root.actionsProgress
+            scale: 0.82 + root.actionsProgress * 0.18
+            transform: Translate {
+                y: (1 - root.actionsProgress) * 34
+            }
 
             Text {
                 text: I18n.t("login.session")
@@ -237,8 +326,9 @@ Rectangle {
             font.family: Theme.fontBody
             font.pixelSize: 13
             font.weight: Font.Medium
-            opacity: root.hasMessage ? 1 : 0
-            scale: root.hasMessage ? 1 : 0.96
+            opacity: (root.hasMessage ? 1 : 0) * root.actionsProgress
+            scale: (root.hasMessage ? 1 : 0.90)
+                * (0.84 + root.actionsProgress * 0.16)
 
             Behavior on height {
                 Anim { type: Motion.fastSpatial }
@@ -260,6 +350,11 @@ Rectangle {
         Row {
             anchors.right: parent.right
             spacing: 10
+            opacity: root.actionsProgress
+            scale: 0.78 + root.actionsProgress * 0.22
+            transform: Translate {
+                y: (1 - root.actionsProgress) * 44
+            }
 
             ActionChip {
                 text: I18n.t("login.back")
@@ -270,8 +365,8 @@ Rectangle {
             Rectangle {
                 width: 142
                 height: 48
-                radius: submitMouse.pressed ? 12 : 18
-                scale: submitMouse.pressed ? 0.94 : 1
+                radius: submitMouse.pressed ? 10 : 18
+                scale: submitMouse.pressed ? 0.88 : 1
                 color: submitMouse.pressed ? Theme.colorPrimaryPressed : Theme.colorPrimary
                 opacity: AuthService.busy ? 0.65 : 1
 
