@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+service_user="${CAELESTIA_GREETER_SERVICE_USER:-$(id -un)}"
+passwd_entry="$(getent passwd "$service_user" || true)"
+
+if [[ -n "$passwd_entry" ]]; then
+    IFS=: read -r _ _ service_uid _ _ service_home _ <<<"$passwd_entry"
+else
+    service_uid="$(id -u)"
+    service_home="/var/lib/greetd"
+fi
+
+service_home="${service_home:-/var/lib/greetd}"
+cache_dir="${CAELESTIA_GREETER_COMPOSITOR_CACHE_DIR:-/var/cache/caelestia-greeter/runtime-$service_user}"
+
+if [[ -z "${HOME:-}" || "$HOME" == "/" ]]; then
+    export HOME="$service_home"
+fi
+
+if [[ -z "${XDG_CACHE_HOME:-}" || ! -d "$XDG_CACHE_HOME" || ! -w "$XDG_CACHE_HOME" ]]; then
+    export XDG_CACHE_HOME="$cache_dir"
+fi
+
+if ! mkdir -p "$XDG_CACHE_HOME" 2>/dev/null || [[ ! -w "$XDG_CACHE_HOME" ]]; then
+    export XDG_CACHE_HOME="/tmp/caelestia-greeter-cache-$service_uid"
+    mkdir -p "$XDG_CACHE_HOME"
+    chmod 0700 "$XDG_CACHE_HOME"
+fi
+
+export XDG_CURRENT_DESKTOP=Hyprland
+export XDG_SESSION_DESKTOP=Hyprland
+export XDG_SESSION_TYPE=wayland
+
+exec /usr/bin/Hyprland --config /etc/greetd/caelestia-greeter-hyprland.conf
