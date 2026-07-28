@@ -32,4 +32,8 @@ export XDG_CURRENT_DESKTOP=Hyprland
 export XDG_SESSION_DESKTOP=Hyprland
 export XDG_SESSION_TYPE=wayland
 
+if command -v start-hyprland >/dev/null 2>&1; then
+    exec start-hyprland -- -c /etc/greetd/caelestia-greeter-hyprland.conf
+fi
+
 exec /usr/bin/Hyprland --config /etc/greetd/caelestia-greeter-hyprland.conf
