@@ -1,0 +1,176 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+runtime_dir="${CAELESTIA_GREETER_RUNTIME_DIR:-/run/caelestia-greeter}"
+cache_dir="${CAELESTIA_GREETER_CACHE_DIR:-/var/cache/caelestia-greeter}"
+state_cache="$cache_dir/state"
+profile_file="$runtime_dir/profile.env"
+service_user="${CAELESTIA_GREETER_SERVICE_USER:-greeter}"
+
+install -d -m 0755 "$runtime_dir" "$cache_dir" "$state_cache" "$state_cache/wallpaper"
+
+service_group=""
+if id "$service_user" >/dev/null 2>&1; then
+    service_group="$(id -gn "$service_user")"
+fi
+
+detect_login_user() {
+    local uid_min uid_max
+    local name password uid gid gecos home shell
+    local best_name="" best_uid=""
+
+    uid_min="$(awk '$1 == "UID_MIN" { print $2; exit }' /etc/login.defs 2>/dev/null || true)"
+    uid_max="$(awk '$1 == "UID_MAX" { print $2; exit }' /etc/login.defs 2>/dev/null || true)"
+    uid_min="${uid_min:-1000}"
+    uid_max="${uid_max:-60000}"
+
+    while IFS=: read -r name password uid gid gecos home shell; do
+        [[ "$uid" =~ ^[0-9]+$ ]] || continue
+        (( uid >= uid_min && uid <= uid_max )) || continue
+        [[ "$name" != "nobody" && "$name" != "greeter" ]] || continue
+        [[ ! "$shell" =~ (nologin|false)$ ]] || continue
+
+        if [[ -z "$best_name" ]] || (( uid < best_uid )); then
+            best_name="$name"
+            best_uid="$uid"
+        fi
+    done < <(getent passwd)
+
+    printf '%s' "$best_name"
+}
+
+trim_whitespace() {
+    local value="$1"
+    value="${value#"${value%%[![:space:]]*}"}"
+    value="${value%"${value##*[![:space:]]}"}"
+    printf '%s' "$value"
+}
+
+asset_extension() {
+    local path="$1"
+    local extension="${path##*.}"
+    extension="${extension,,}"
+
+    case "$extension" in
+        png|jpg|jpeg|webp|bmp|gif|svg|avif)
+            printf '%s' "$extension"
+            ;;
+        *)
+            printf 'img'
+            ;;
+    esac
+}
+
+copy_asset() {
+    local source="$1"
+    local target_base="$2"
+    local extension target
+
+    [[ -n "$source" && -f "$source" && -r "$source" ]] || return 1
+    extension="$(asset_extension "$source")"
+    target="$target_base.$extension"
+
+    rm -f "$target_base" "$target_base".*
+    install -m 0644 "$source" "$target.tmp"
+    mv -f "$target.tmp" "$target"
+    printf '%s' "$target"
+}
+
+user="${CAELESTIA_GREETER_USER:-${LUMINA_GREETER_USER:-}}"
+if [[ -z "$user" || "$user" == "greeter" || "$user" == "root" ]]; then
+    user="$(detect_login_user || true)"
+fi
+
+if [[ -z "$user" ]]; then
+    printf 'Caelestia Greeter: no login user could be detected.\n' >&2
+    rm -f "$profile_file"
+    exit 0
+fi
+
+passwd_entry="$(getent passwd "$user" || true)"
+if [[ -n "$passwd_entry" ]]; then
+    IFS=: read -r _ _ _ _ gecos home_dir _ <<<"$passwd_entry"
+else
+    gecos="$user"
+    home_dir="/home/$user"
+fi
+
+accounts_file="/var/lib/AccountsService/users/$user"
+registered_name=""
+if [[ -r "$accounts_file" ]]; then
+    registered_name="$(awk -F= '$1 == "RealName" { print substr($0, index($0, "=") + 1); exit }' "$accounts_file")"
+fi
+
+display_name="$(trim_whitespace "$registered_name")"
+if [[ -z "$display_name" ]]; then
+    display_name="$(trim_whitespace "${gecos%%,*}")"
+fi
+if [[ -z "$display_name" ]]; then
+    display_name="$user"
+fi
+
+avatar_cache=""
+configured_icon=""
+if [[ -r "$accounts_file" ]]; then
+    configured_icon="$(awk -F= '$1 == "Icon" { print substr($0, index($0, "=") + 1); exit }' "$accounts_file")"
+fi
+
+for candidate in \
+    "$configured_icon" \
+    "/var/lib/AccountsService/icons/$user" \
+    "$home_dir/.face.icon" \
+    "$home_dir/.face"; do
+    candidate="${candidate#file://}"
+    if avatar_cache="$(copy_asset "$candidate" "$cache_dir/avatar-$user" 2>/dev/null)"; then
+        break
+    fi
+done
+
+source_state_dir="${CAELESTIA_GREETER_SOURCE_STATE_DIR:-$home_dir/.local/state/caelestia}"
+scheme_source="${CAELESTIA_GREETER_SCHEME_SOURCE:-$source_state_dir/scheme.json}"
+scheme_cache=""
+if [[ -f "$scheme_source" && -r "$scheme_source" ]]; then
+    scheme_cache="$state_cache/scheme.json"
+    install -m 0644 "$scheme_source" "$scheme_cache.tmp"
+    mv -f "$scheme_cache.tmp" "$scheme_cache"
+else
+    rm -f "$state_cache/scheme.json"
+fi
+
+wallpaper_source="${CAELESTIA_GREETER_WALLPAPER_SOURCE:-}"
+wallpaper_pointer="$source_state_dir/wallpaper/path.txt"
+if [[ -z "$wallpaper_source" && -r "$wallpaper_pointer" ]]; then
+    wallpaper_source="$(head -n 1 "$wallpaper_pointer" | tr -d '\r')"
+fi
+
+wallpaper_cache=""
+if wallpaper_cache="$(copy_asset "$wallpaper_source" "$cache_dir/wallpaper" 2>/dev/null)"; then
+    printf '%s\n' "$wallpaper_cache" >"$state_cache/wallpaper/path.txt"
+    chmod 0644 "$state_cache/wallpaper/path.txt"
+else
+    rm -f "$state_cache/wallpaper/path.txt" "$cache_dir/wallpaper" "$cache_dir/wallpaper".*
+fi
+
+profile_tmp="$profile_file.tmp"
+{
+    printf 'CAELESTIA_GREETER_USER=%q\n' "$user"
+    printf 'CAELESTIA_GREETER_DISPLAY_NAME=%q\n' "$display_name"
+    printf 'CAELESTIA_GREETER_STATE_DIR=%q\n' "$state_cache"
+    if [[ -n "$avatar_cache" ]]; then
+        printf 'CAELESTIA_GREETER_AVATAR=%q\n' "$avatar_cache"
+    fi
+    if [[ -n "$scheme_cache" ]]; then
+        printf 'CAELESTIA_GREETER_SCHEME_PATH=%q\n' "$scheme_cache"
+    fi
+    if [[ -n "$wallpaper_cache" ]]; then
+        printf 'CAELESTIA_GREETER_WALLPAPER=%q\n' "$wallpaper_cache"
+    fi
+} >"$profile_tmp"
+
+chmod 0644 "$profile_tmp"
+mv -f "$profile_tmp" "$profile_file"
+
+if [[ -n "$service_group" ]]; then
+    chown -R "$service_user:$service_group" "$cache_dir"
+    chown "$service_user:$service_group" "$profile_file"
+fi
