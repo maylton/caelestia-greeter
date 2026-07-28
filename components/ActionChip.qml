@@ -7,12 +7,16 @@ Rectangle {
     property string text: ""
     property bool selected: false
     property bool destructive: false
+    property real defaultRadius: height / 2
+    property real pressedRadius: 10
+    property real hoverScale: 1.035
+    property real pressedScale: 0.88
     signal clicked()
 
     implicitWidth: label.implicitWidth + 28
     implicitHeight: 42
-    radius: mouse.pressed ? 10 : height / 2
-    scale: mouse.pressed ? 0.88 : mouse.containsMouse ? 1.035 : 1
+    radius: mouse.pressed ? pressedRadius : defaultRadius
+    scale: mouse.pressed ? pressedScale : mouse.containsMouse ? hoverScale : 1
     color: {
         if (!root.enabled)
             return Theme.colorDisabled;
