@@ -30,7 +30,7 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: Qt.formatTime(systemClock.date, "HH")
                 color: Theme.colorText
-                font.family: Theme.fontDisplay
+                font.family: Theme.fontHeadline
                 font.pixelSize: root.baseSize * 0.74
                 font.weight: Font.Bold
                 font.letterSpacing: -4
@@ -40,7 +40,7 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: Qt.formatTime(systemClock.date, "mm")
                 color: Theme.colorText
-                font.family: Theme.fontDisplay
+                font.family: Theme.fontHeadline
                 font.pixelSize: root.baseSize * 0.74
                 font.weight: Font.Bold
                 font.letterSpacing: -4
@@ -52,16 +52,16 @@ Item {
             width: dateLabel.implicitWidth + 34
             height: 42
             radius: height / 2
-            color: Theme.colorTertiaryContainer
-            border.color: Theme.colorOutline
+            color: "transparent"
+            border.width: 0
 
             Text {
                 id: dateLabel
 
                 anchors.centerIn: parent
-                text: I18n.formatDate(systemClock.date)
-                color: Theme.colorTertiaryContainerText
-                font.family: Theme.fontBody
+                text: I18n.formatDate(systemClock.date).toUpperCase()
+                color: Theme.colorText
+                font.family: Theme.fontTitle
                 font.pixelSize: 16
                 font.weight: Font.DemiBold
             }
