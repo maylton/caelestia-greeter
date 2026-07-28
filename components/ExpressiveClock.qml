@@ -6,186 +6,88 @@ import "../i18n"
 Item {
     id: root
 
-    property string layoutMode: "stacked"
-    property string displayedLayout: layoutMode
-    property real baseSize: 180
-    property bool ready: false
+    property real baseSize: 210
+
+    readonly property real clockGap: Math.max(8, Math.round(baseSize * 0.035))
+    readonly property real dateSize: Math.max(15, Math.min(20, baseSize * 0.085))
+
+    function topOffset(metrics) {
+        return metrics.tightBoundingRect.y - metrics.boundingRect.y;
+    }
 
     implicitWidth: content.implicitWidth
     implicitHeight: content.implicitHeight
-
-    Component.onCompleted: {
-        displayedLayout = layoutMode;
-        ready = true;
-    }
-
-    onLayoutModeChanged: {
-        if (!ready) {
-            displayedLayout = layoutMode;
-            return;
-        }
-        layoutAnimation.restart();
-    }
 
     SystemClock {
         id: systemClock
         precision: SystemClock.Minutes
     }
 
-    SequentialAnimation {
-        id: layoutAnimation
-
-        ParallelAnimation {
-            Anim {
-                target: clockLoader
-                property: "opacity"
-                to: 0
-                type: Motion.fastEffects
-            }
-
-            Anim {
-                target: clockLoader
-                property: "scale"
-                to: 0.54
-                type: Motion.fastSpatial
-            }
-
-            Anim {
-                target: clockLoader
-                property: "rotation"
-                to: -9
-                type: Motion.fastSpatial
-            }
-
-            Anim {
-                target: dateBadge
-                property: "scale"
-                to: 0.90
-                type: Motion.fastSpatial
-            }
-        }
-
-        PropertyAction {
-            target: root
-            property: "displayedLayout"
-            value: root.layoutMode
-        }
-
-        PropertyAction {
-            target: clockLoader
-            property: "rotation"
-            value: 9
-        }
-
-        ParallelAnimation {
-            Anim {
-                target: clockLoader
-                property: "opacity"
-                to: 1
-                type: Motion.defaultEffects
-            }
-
-            Anim {
-                target: clockLoader
-                property: "scale"
-                to: 1
-                type: Motion.fastSpatial
-            }
-
-            Anim {
-                target: clockLoader
-                property: "rotation"
-                to: 0
-                type: Motion.fastSpatial
-            }
-
-            Anim {
-                target: dateBadge
-                property: "scale"
-                to: 1
-                type: Motion.fastSpatial
-            }
-        }
-    }
-
     Column {
         id: content
 
         anchors.centerIn: parent
-        spacing: 16
+        spacing: Math.max(16, Math.round(root.baseSize * 0.09))
 
-        Loader {
-            id: clockLoader
-
-            anchors.horizontalCenter: parent.horizontalCenter
-            sourceComponent: root.displayedLayout === "horizontal"
-                ? horizontalClock
-                : stackedClock
-            transformOrigin: Item.Center
-        }
-
-        Rectangle {
-            id: dateBadge
+        Item {
+            id: clockFace
 
             anchors.horizontalCenter: parent.horizontalCenter
-            width: dateLabel.implicitWidth + 34
-            height: 42
-            radius: height / 2
-            color: Theme.colorTertiaryContainer
-            border.color: Theme.colorOutline
-            transformOrigin: Item.Center
+            implicitWidth: hours.implicitWidth + minutes.implicitWidth + root.clockGap
+            implicitHeight: Math.max(
+                hourMetrics.tightBoundingRect.height,
+                minuteMetrics.tightBoundingRect.height
+            )
 
             Text {
-                id: dateLabel
+                id: hours
 
-                anchors.centerIn: parent
-                text: I18n.formatDate(systemClock.date)
-                color: Theme.colorTertiaryContainerText
-                font.family: Theme.fontBody
-                font.pixelSize: 16
-                font.weight: Font.DemiBold
-            }
-        }
-    }
-
-    Component {
-        id: stackedClock
-
-        Column {
-            spacing: -Math.round(root.baseSize * 0.18)
-
-            Text {
-                anchors.horizontalCenter: parent.horizontalCenter
+                y: -root.topOffset(hourMetrics)
                 text: Qt.formatTime(systemClock.date, "HH")
-                color: Theme.colorText
+                color: Theme.colorPrimary
                 font.family: Theme.fontDisplay
-                font.pixelSize: root.baseSize * 0.74
-                font.weight: Font.Bold
-                font.letterSpacing: -4
+                font.pixelSize: root.baseSize
+                font.weight: Font.Normal
+                font.stretch: Font.UltraCondensed
+                font.variableAxes: ({ "wdth": 30 })
+
+                TextMetrics {
+                    id: hourMetrics
+                    text: hours.text
+                    font: hours.font
+                }
             }
 
             Text {
-                anchors.horizontalCenter: parent.horizontalCenter
+                id: minutes
+
+                anchors.right: parent.right
+                y: -root.topOffset(minuteMetrics)
                 text: Qt.formatTime(systemClock.date, "mm")
-                color: Theme.colorText
+                color: Theme.colorSecondary
                 font.family: Theme.fontDisplay
-                font.pixelSize: root.baseSize * 0.74
-                font.weight: Font.Bold
-                font.letterSpacing: -4
+                font.pixelSize: root.baseSize
+                font.weight: Font.Normal
+                font.stretch: Font.UltraCondensed
+                font.variableAxes: ({ "wdth": 30 })
+
+                TextMetrics {
+                    id: minuteMetrics
+                    text: minutes.text
+                    font: minutes.font
+                }
             }
         }
-    }
-
-    Component {
-        id: horizontalClock
 
         Text {
-            text: Qt.formatTime(systemClock.date, "HH:mm")
+            id: dateLabel
+
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: I18n.formatDate(systemClock.date).toUpperCase()
             color: Theme.colorText
-            font.family: Theme.fontDisplay
-            font.pixelSize: root.baseSize
-            font.weight: Font.Bold
-            font.letterSpacing: -5
+            font.family: Theme.fontBody
+            font.pixelSize: root.dateSize
+            font.weight: Font.DemiBold
         }
     }
 }
