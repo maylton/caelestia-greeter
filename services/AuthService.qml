@@ -22,11 +22,13 @@ Singleton {
 
     readonly property string launchMarkerPath: {
         const runtimeDir = Quickshell.env("XDG_RUNTIME_DIR") || "/tmp";
-        return runtimeDir + "/lumina-greeter-launch-requested";
+        return runtimeDir + "/caelestia-greeter-launch-requested";
     }
 
     readonly property bool previewMode: {
-        const forced = Quickshell.env("LUMINA_GREETER_PREVIEW") || "";
+        const forced = Quickshell.env("CAELESTIA_GREETER_PREVIEW")
+            || Quickshell.env("LUMINA_GREETER_PREVIEW")
+            || "";
         return forced === "1" || forced.toLowerCase() === "true" || !Greetd.available;
     }
 
@@ -119,6 +121,7 @@ Singleton {
 
     Timer {
         id: previewTimer
+
         interval: 650
         repeat: false
         onTriggered: {
