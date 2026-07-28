@@ -6,6 +6,7 @@ A Material Expressive login screen for Caelestia Shell, built with QML, Quickshe
 
 - Caelestia wallpaper and Material 3 colour scheme.
 - Caelestia expressive spatial and effect motion curves.
+- Animated Material password glyphs matching the Caelestia lock screen.
 - Stacked and horizontal clock layouts.
 - Brazilian Portuguese and English.
 - Automatic user, display-name and avatar detection.
@@ -20,6 +21,7 @@ A Material Expressive login screen for Caelestia Shell, built with QML, Quickshe
 - Hyprland
 - Quickshell 0.3 or newer
 - greetd
+- `M3Shapes`, provided by Caelestia Shell; simple circular password glyphs are used as a fallback
 
 ## Preview
 
