@@ -1,5 +1,5 @@
 import QtQuick
-import "../design/Tokens.js" as Tokens
+import "../design"
 
 Rectangle {
     id: root
@@ -12,9 +12,9 @@ Rectangle {
 
     implicitHeight: 54
     radius: 18
-    color: input.activeFocus ? Tokens.colorFieldActive : Tokens.colorField
+    color: input.activeFocus ? Theme.colorFieldActive : Theme.colorField
     border.width: input.activeFocus ? 2 : 1
-    border.color: input.activeFocus ? Tokens.colorPrimary : Tokens.colorOutline
+    border.color: input.activeFocus ? Theme.colorPrimary : Theme.colorOutline
 
     function focusInput(reason) {
         input.forceActiveFocus(reason === undefined
@@ -23,11 +23,12 @@ Rectangle {
     }
 
     Behavior on color {
-        ColorAnimation { duration: Tokens.durationShort }
+        ColorAnimation { duration: Theme.durationShort }
     }
 
     TextInput {
         id: input
+
         anchors {
             left: parent.left
             right: parent.right
@@ -35,10 +36,10 @@ Rectangle {
             margins: 18
         }
         enabled: root.enabled
-        color: Tokens.colorText
-        selectionColor: Tokens.colorPrimaryContainer
-        selectedTextColor: Tokens.colorPrimaryContainerText
-        font.family: Tokens.fontBody
+        color: Theme.colorText
+        selectionColor: Theme.colorPrimaryContainer
+        selectedTextColor: Theme.colorPrimaryContainerText
+        font.family: Theme.fontBody
         font.pixelSize: 15
         echoMode: root.passwordMode ? TextInput.Password : TextInput.Normal
         passwordCharacter: "●"
@@ -53,8 +54,8 @@ Rectangle {
         }
         visible: input.text.length === 0 && !input.activeFocus
         text: root.placeholderText
-        color: Tokens.colorTextMuted
-        font.family: Tokens.fontBody
+        color: Theme.colorTextMuted
+        font.family: Theme.fontBody
         font.pixelSize: 15
     }
 }
