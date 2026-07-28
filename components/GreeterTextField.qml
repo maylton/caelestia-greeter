@@ -125,10 +125,7 @@ Rectangle {
         color: Theme.colorTextMuted
         font.family: Theme.fontBody
         font.pixelSize: 15
-        opacity: input.text.length === 0
-            && (root.passwordMode || !input.activeFocus)
-            ? 1
-            : 0
+        opacity: input.text.length === 0 && !input.activeFocus ? 1 : 0
         scale: opacity > 0 ? 1 : 0.90
 
         Behavior on opacity {
@@ -143,7 +140,7 @@ Rectangle {
     Rectangle {
         id: passwordCaret
 
-        x: placeholder.x + placeholder.implicitWidth + 6
+        x: Math.round((root.width - width) / 2)
         anchors.verticalCenter: parent.verticalCenter
         width: 2
         height: 20
