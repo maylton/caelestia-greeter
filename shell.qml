@@ -1,5 +1,4 @@
 //@ pragma ShellId caelestia-greeter
-//@ pragma AppId io.github.maylton.caelestia.greeter
 //@ pragma DropExpensiveFonts
 
 import Quickshell
