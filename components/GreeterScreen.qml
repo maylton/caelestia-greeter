@@ -2,7 +2,7 @@ import Quickshell
 import Quickshell.Wayland
 import QtQuick
 import "../config"
-import "../design/Tokens.js" as Tokens
+import "../design"
 import "../i18n"
 import "../services"
 
@@ -30,10 +30,11 @@ PanelWindow {
     WlrLayershell.keyboardFocus: interactiveScreen
         ? WlrKeyboardFocus.Exclusive
         : WlrKeyboardFocus.None
-    WlrLayershell.namespace: "lumina-greeter"
+    WlrLayershell.namespace: "caelestia-greeter"
 
     Item {
         id: scene
+
         anchors.fill: parent
         focus: window.interactiveScreen
 
@@ -64,19 +65,20 @@ PanelWindow {
 
         Rectangle {
             anchors.fill: parent
+
             gradient: Gradient {
-                GradientStop { position: 0.0; color: "#30121a2d" }
-                GradientStop { position: 0.52; color: "#160a1220" }
-                GradientStop { position: 1.0; color: "#75101420" }
+                GradientStop { position: 0.0; color: Theme.scrimTop }
+                GradientStop { position: 0.52; color: Theme.scrimMiddle }
+                GradientStop { position: 1.0; color: Theme.scrimBottom }
             }
         }
 
         Rectangle {
             anchors.fill: parent
-            color: window.loginOpen ? "#29030a12" : "transparent"
+            color: window.loginOpen ? Theme.loginScrim : "transparent"
 
             Behavior on color {
-                ColorAnimation { duration: Tokens.durationMedium }
+                ColorAnimation { duration: Theme.durationMedium }
             }
         }
 
@@ -89,6 +91,7 @@ PanelWindow {
 
         ExpressiveClock {
             id: clock
+
             layoutMode: window.clockLayout
             baseSize: Math.max(112, Math.min(scene.width * 0.16, scene.height * 0.25))
             x: Math.round((scene.width - width) / 2)
@@ -98,7 +101,7 @@ PanelWindow {
 
             Behavior on y {
                 NumberAnimation {
-                    duration: Tokens.durationLong
+                    duration: Theme.durationLong
                     easing.type: Easing.OutBack
                     easing.overshoot: 1.04
                 }
@@ -107,6 +110,7 @@ PanelWindow {
 
         LoginSurface {
             id: loginSurface
+
             visible: window.interactiveScreen
             width: Math.min(540, scene.width - 40)
             x: Math.round((scene.width - width) / 2)
@@ -127,12 +131,12 @@ PanelWindow {
             }
 
             Behavior on opacity {
-                NumberAnimation { duration: Tokens.durationMedium }
+                NumberAnimation { duration: Theme.durationMedium }
             }
 
             Behavior on scale {
                 NumberAnimation {
-                    duration: Tokens.durationLong
+                    duration: Theme.durationLong
                     easing.type: Easing.OutBack
                     easing.overshoot: 1.08
                 }
@@ -145,8 +149,8 @@ PanelWindow {
             anchors.bottom: parent.bottom
             anchors.bottomMargin: 48
             text: I18n.t("idle.prompt")
-            color: Tokens.colorTextMuted
-            font.family: Tokens.fontBody
+            color: Theme.colorTextMuted
+            font.family: Theme.fontBody
             font.pixelSize: 14
             font.weight: Font.Medium
         }
@@ -162,6 +166,7 @@ PanelWindow {
                 text: window.clockLayout === "stacked"
                     ? I18n.t("clock.stacked")
                     : I18n.t("clock.horizontal")
+                selected: true
                 onClicked: window.clockLayout = window.clockLayout === "stacked"
                     ? "horizontal"
                     : "stacked"
@@ -187,15 +192,16 @@ PanelWindow {
             width: previewLabel.implicitWidth + 28
             height: 38
             radius: height / 2
-            color: Tokens.colorSurfaceContainer
-            border.color: Tokens.colorOutline
+            color: Theme.colorSurfaceContainer
+            border.color: Theme.colorOutline
 
             Text {
                 id: previewLabel
+
                 anchors.centerIn: parent
                 text: I18n.t("preview.badge")
-                color: Tokens.colorText
-                font.family: Tokens.fontBody
+                color: Theme.colorText
+                font.family: Theme.fontBody
                 font.pixelSize: 13
                 font.weight: Font.DemiBold
             }
