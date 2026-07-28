@@ -117,11 +117,10 @@ Rectangle {
     }
 
     Text {
-        anchors {
-            left: root.passwordMode ? undefined : input.left
-            horizontalCenter: root.passwordMode ? parent.horizontalCenter : undefined
-            verticalCenter: parent.verticalCenter
-        }
+        x: root.passwordMode
+            ? Math.round((root.width - implicitWidth) / 2)
+            : input.x
+        anchors.verticalCenter: parent.verticalCenter
         text: root.placeholderText
         color: Theme.colorTextMuted
         font.family: Theme.fontBody
