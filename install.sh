@@ -242,6 +242,9 @@ path_exists() {
 backup_path() {
     local path="$1" relative destination
     path_exists "$path" || return 0
+    if [[ -f "$BACKUP_DIR/backed-up-paths.txt" ]] && grep -Fxq -- "$path" "$BACKUP_DIR/backed-up-paths.txt"; then
+        return 0
+    fi
     relative="${path#/}"
     destination="$BACKUP_DIR/files/$relative"
     mkdir -p -- "$(dirname -- "$destination")"
@@ -277,6 +280,7 @@ collect_backup() {
         /usr/local/bin/caelestia-greeter-profile-sync
         /usr/local/bin/caelestia-greeter-restore
         /usr/local/bin/caelestia-session
+        /var/lib/caelestia-greeter-install.env
     )
     local path
     for path in "${generic_paths[@]}"; do backup_path "$path"; done
@@ -497,7 +501,10 @@ chmod 0600 "$BACKUP_DIR/metadata.env"
 CURRENT_STEP="$T_INSTALL_FILES"
 info "$CURRENT_STEP"
 if ! getent passwd greeter >/dev/null 2>&1; then
-    useradd --system --home-dir /var/lib/greeter --create-home --shell /usr/bin/nologin greeter
+    require_command useradd
+    nologin_shell="$(command -v nologin || true)"
+    nologin_shell="${nologin_shell:-/bin/false}"
+    useradd --system --home-dir /var/lib/greeter --create-home --shell "$nologin_shell" greeter
 fi
 install_project
 
