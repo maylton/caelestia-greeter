@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ -r /etc/locale.conf ]]; then
+    set -a
+    # shellcheck disable=SC1091
+    source /etc/locale.conf
+    set +a
+fi
+
+profile_env="${CAELESTIA_GREETER_PROFILE_ENV:-/run/caelestia-greeter/profile.env}"
+if [[ -r "$profile_env" ]]; then
+    set -a
+    # shellcheck disable=SC1090
+    source "$profile_env"
+    set +a
+fi
+
+detect_login_user() {
+    local uid_min uid_max
+    local name password uid gid gecos home shell
+    local best_name="" best_uid=""
+
+    uid_min="$(awk '$1 == "UID_MIN" { print $2; exit }' /etc/login.defs 2>/dev/null || true)"
+    uid_max="$(awk '$1 == "UID_MAX" { print $2; exit }' /etc/login.defs 2>/dev/null || true)"
+    uid_min="${uid_min:-1000}"
+    uid_max="${uid_max:-60000}"
+
+    while IFS=: read -r name password uid gid gecos home shell; do
+        [[ "$uid" =~ ^[0-9]+$ ]] || continue
+        (( uid >= uid_min && uid <= uid_max )) || continue
+        [[ "$name" != "nobody" && "$name" != "greeter" ]] || continue
+        [[ ! "$shell" =~ (nologin|false)$ ]] || continue
+
+        if [[ -z "$best_name" ]] || (( uid < best_uid )); then
+            best_name="$name"
+            best_uid="$uid"
+        fi
+    done < <(getent passwd)
+
+    printf '%s' "$best_name"
+}
+
+user="${CAELESTIA_GREETER_USER:-${LUMINA_GREETER_USER:-}}"
+if [[ -z "$user" || "$user" == "greeter" || "$user" == "root" ]]; then
+    user="$(detect_login_user || true)"
+fi
+
+if [[ -n "$user" ]]; then
+    export CAELESTIA_GREETER_USER="$user"
+
+    passwd_entry="$(getent passwd "$user" || true)"
+    if [[ -n "$passwd_entry" ]]; then
+        IFS=: read -r _ _ _ _ gecos home_dir _ <<<"$passwd_entry"
+    else
+        gecos="$user"
+        home_dir="/home/$user"
+    fi
+
+    if [[ -z "${CAELESTIA_GREETER_DISPLAY_NAME:-}" ]]; then
+        display_name="${gecos%%,*}"
+        export CAELESTIA_GREETER_DISPLAY_NAME="${display_name:-$user}"
+    fi
+
+    if [[ -z "${CAELESTIA_GREETER_AVATAR:-}" ]]; then
+        accounts_file="/var/lib/AccountsService/users/$user"
+        configured_icon=""
+        if [[ -r "$accounts_file" ]]; then
+            configured_icon="$(awk -F= '$1 == "Icon" { print substr($0, index($0, "=") + 1); exit }' "$accounts_file")"
+        fi
+
+        for candidate in \
+            "$configured_icon" \
+            "/var/lib/AccountsService/icons/$user" \
+            "$home_dir/.face.icon" \
+            "$home_dir/.face"; do
+            candidate_path="${candidate#file://}"
+            if [[ -n "$candidate_path" && -f "$candidate_path" && -r "$candidate_path" ]]; then
+                export CAELESTIA_GREETER_AVATAR="$candidate_path"
+                break
+            fi
+        done
+    fi
+fi
+
+config_dir="${CAELESTIA_GREETER_CONFIG_DIR:-/etc/xdg/quickshell/caelestia-greeter}"
+exec /usr/bin/qs -p "$config_dir"
