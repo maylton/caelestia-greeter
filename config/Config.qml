@@ -29,13 +29,18 @@ Singleton {
         }
     }
 
+    readonly property string homeDir: env("HOME")
+    readonly property string configHome: env("XDG_CONFIG_HOME")
+        || (homeDir ? `${homeDir}/.config` : "")
+    readonly property string shellConfigPath: env("CAELESTIA_GREETER_SHELL_CONFIG_PATH")
+        || (configHome ? `${configHome}/caelestia/shell.json` : "")
+
     readonly property string stateDir: {
         const override = env("CAELESTIA_GREETER_STATE_DIR");
         if (override)
             return override;
 
-        const home = env("HOME");
-        const stateHome = env("XDG_STATE_HOME") || (home ? `${home}/.local/state` : "");
+        const stateHome = env("XDG_STATE_HOME") || (homeDir ? `${homeDir}/.local/state` : "");
         return stateHome ? `${stateHome}/caelestia` : "";
     }
 
