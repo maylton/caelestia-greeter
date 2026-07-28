@@ -31,7 +31,7 @@ Singleton {
             root.errorMessage = I18n.t("auth.usernameRequired");
             return;
         }
-        if (!command?.length) {
+        if (!command || command.length === 0) {
             root.errorMessage = I18n.t("auth.invalidSession");
             return;
         }
