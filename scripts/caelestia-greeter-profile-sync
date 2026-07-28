@@ -114,6 +114,29 @@ else
     rm -f "$cache_dir/shell.json"
 fi
 
+font_name="GoogleSansFlex-VariableFont_GRAD,ROND,opsz,slnt,wdth,wght.ttf"
+font_source="${CAELESTIA_GREETER_GOOGLE_SANS_FLEX_SOURCE:-}"
+font_cache=""
+if [[ -z "$font_source" ]]; then
+    for candidate in \
+        "$home_dir/.config/quickshell/caelestia/assets/google-sans-flex/$font_name" \
+        "/etc/xdg/quickshell/caelestia/assets/google-sans-flex/$font_name" \
+        "/usr/share/quickshell/caelestia/assets/google-sans-flex/$font_name"; do
+        if [[ -r "$candidate" && -f "$candidate" ]]; then
+            font_source="$candidate"
+            break
+        fi
+    done
+fi
+
+if [[ -n "$font_source" && -r "$font_source" && -f "$font_source" ]]; then
+    font_cache="$cache_dir/$font_name"
+    install -m 0644 "$font_source" "$font_cache.tmp"
+    mv -f "$font_cache.tmp" "$font_cache"
+else
+    rm -f "$cache_dir/$font_name"
+fi
+
 source_state="${CAELESTIA_GREETER_SOURCE_STATE_DIR:-$home_dir/.local/state/caelestia}"
 scheme_source="${CAELESTIA_GREETER_SCHEME_SOURCE:-$source_state/scheme.json}"
 scheme_cache=""
@@ -148,6 +171,9 @@ profile_tmp="$profile_file.tmp"
     fi
     if [[ -n "$shell_config_cache" ]]; then
         printf 'CAELESTIA_GREETER_SHELL_CONFIG_PATH=%q\n' "$shell_config_cache"
+    fi
+    if [[ -n "$font_cache" ]]; then
+        printf 'CAELESTIA_GREETER_GOOGLE_SANS_FLEX_SOURCE=%q\n' "$font_cache"
     fi
     if [[ -n "$scheme_cache" ]]; then
         printf 'CAELESTIA_GREETER_SCHEME_PATH=%q\n' "$scheme_cache"
