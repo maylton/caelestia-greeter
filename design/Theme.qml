@@ -73,6 +73,7 @@ Singleton {
     readonly property color colorPrimaryContainer: withAlpha(colour("primaryContainer", "#6f334a", "#ffd9e3"), 0.94)
     readonly property color colorPrimaryContainerText: colour("onPrimaryContainer", "#ffd9e3", "#3a071e")
 
+    readonly property color colorSecondary: colour("secondary", "#e5bdc8", "#75565f")
     readonly property color colorSecondaryContainer: withAlpha(colour("secondaryContainer", "#5a3f48", "#ffd9e3"), 0.94)
     readonly property color colorSecondaryContainerText: colour("onSecondaryContainer", "#ffd9e3", "#2a151c")
     readonly property color colorTertiaryContainer: withAlpha(colour("tertiaryContainer", "#654524", "#ffdcc2"), 0.90)
