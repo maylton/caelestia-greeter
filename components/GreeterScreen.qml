@@ -45,11 +45,11 @@ PanelWindow {
     }
 
     Behavior on exitSpatial {
-        Anim { type: Motion.fastSpatial }
+        Anim { type: Motion.defaultSpatial }
     }
 
     Behavior on exitEffects {
-        Anim { type: Motion.defaultEffects }
+        Anim { type: Motion.slowEffects }
     }
 
     Item {
@@ -95,18 +95,18 @@ PanelWindow {
                 property: "spatialProgress"
                 from: 0
                 to: 1
-                type: Motion.fastSpatial
+                type: Motion.defaultSpatial
             }
 
             SequentialAnimation {
-                PauseAnimation { duration: 60 }
+                PauseAnimation { duration: 120 }
 
                 Anim {
                     target: scene
                     property: "effectProgress"
                     from: 0
                     to: 1
-                    type: Motion.defaultEffects
+                    type: Motion.slowEffects
                 }
             }
         }
@@ -120,7 +120,9 @@ PanelWindow {
             asynchronous: true
             cache: true
             opacity: scene.backgroundProgress
-            scale: 1.035 - scene.spatialProgress * 0.035 + window.exitSpatial * 0.02
+            scale: 1.10
+                - scene.spatialProgress * 0.10
+                + window.exitSpatial * 0.08
         }
 
         Rectangle {
@@ -160,11 +162,17 @@ PanelWindow {
             layoutMode: window.clockLayout
             baseSize: Math.max(112, Math.min(scene.width * 0.16, scene.height * 0.25))
             x: Math.round((scene.width - width) / 2)
-            y: closedY + (openY - closedY) * window.loginSpatial
+            y: closedY
+                + (openY - closedY) * window.loginSpatial
+                + (1 - scene.spatialProgress) * 86
+                - window.exitSpatial * 34
             opacity: scene.effectProgress * (1 - window.exitEffects)
-            scale: (0.78 + scene.spatialProgress * 0.22)
+            scale: (0.54 + scene.spatialProgress * 0.46)
                 * (1 - window.loginSpatial * 0.02)
-                * (1 - window.exitSpatial * 0.12)
+                * (1 - window.exitSpatial * 0.30)
+            rotation: -6 * (1 - scene.spatialProgress)
+                + window.exitSpatial * 4
+            transformOrigin: Item.Center
         }
 
         LoginSurface {
@@ -178,12 +186,23 @@ PanelWindow {
             visible: window.interactiveScreen
             width: Math.min(540, scene.width - 40)
             x: Math.round((scene.width - width) / 2)
-            y: targetY + (1 - window.loginSpatial) * 28 + window.exitSpatial * 18
+            y: targetY
+                + (1 - scene.spatialProgress) * 116
+                + (1 - window.loginSpatial) * 72
+                + window.exitSpatial * 94
             opacity: scene.effectProgress
                 * window.loginEffects
                 * (1 - window.exitEffects)
-            scale: (0.92 + scene.spatialProgress * window.loginSpatial * 0.08)
-                * (1 - window.exitSpatial * 0.08)
+            scale: (0.68 + scene.spatialProgress * 0.32)
+                * (0.88 + window.loginSpatial * 0.12)
+                * (1 - window.exitSpatial * 0.44)
+            rotation: -5 * (1 - scene.spatialProgress)
+                - 2 * (1 - window.loginSpatial)
+                + window.exitSpatial * 7
+            transformOrigin: Item.Center
+            presentationProgress: scene.spatialProgress
+                * window.loginSpatial
+                * (1 - window.exitSpatial)
             enabled: window.loginOpen && !AuthService.launching
             active: window.loginOpen
             defaultUser: Config.defaultUser
@@ -201,7 +220,7 @@ PanelWindow {
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: 48 - (1 - window.loginSpatial) * 4
+            anchors.bottomMargin: 48 - (1 - window.loginSpatial) * 12
             text: I18n.t("idle.prompt")
             color: Theme.colorTextMuted
             font.family: Theme.fontBody
@@ -210,7 +229,7 @@ PanelWindow {
             opacity: scene.effectProgress
                 * (1 - window.loginEffects)
                 * (1 - window.exitEffects)
-            scale: 0.96 + (1 - window.loginSpatial) * 0.04
+            scale: 0.82 + (1 - window.loginSpatial) * 0.18
         }
 
         Row {
@@ -221,8 +240,10 @@ PanelWindow {
             visible: window.interactiveScreen
             enabled: !AuthService.launching
             opacity: scene.effectProgress * (1 - window.exitEffects)
+            scale: 0.84 + scene.spatialProgress * 0.16
             transform: Translate {
-                y: (1 - scene.spatialProgress) * 16 + window.exitSpatial * 12
+                y: (1 - scene.spatialProgress) * 42
+                    + window.exitSpatial * 32
             }
 
             ActionChip {
@@ -258,8 +279,12 @@ PanelWindow {
             border.color: Theme.colorOutline
             visible: AuthService.previewMode && window.interactiveScreen
             opacity: scene.effectProgress * (1 - window.exitEffects)
-            scale: (0.9 + scene.spatialProgress * 0.1)
-                * (1 - window.exitSpatial * 0.08)
+            scale: (0.72 + scene.spatialProgress * 0.28)
+                * (1 - window.exitSpatial * 0.20)
+            transform: Translate {
+                y: (1 - scene.spatialProgress) * 34
+                    + window.exitSpatial * 26
+            }
 
             Text {
                 id: previewLabel
