@@ -7,15 +7,17 @@ Rectangle {
     property alias text: input.text
     property string placeholderText: ""
     property bool passwordMode: false
+    property real revealProgress: 1
     signal accepted()
 
     implicitHeight: 54
-    radius: input.activeFocus ? 14 : 18
-    scale: input.activeFocus ? 1.012 : 1
+    radius: input.activeFocus ? 12 : 18
+    scale: (0.78 + revealProgress * 0.22)
+        * (input.activeFocus ? 1.028 : 1)
     color: input.activeFocus ? Theme.colorFieldActive : Theme.colorField
     border.width: input.activeFocus ? 2 : 1
     border.color: input.activeFocus ? Theme.colorPrimary : Theme.colorOutline
-    opacity: root.enabled ? 1 : 0.55
+    opacity: (root.enabled ? 1 : 0.55) * revealProgress
 
     function focusInput(reason) {
         input.forceActiveFocus(reason ?? Qt.OtherFocusReason);
@@ -76,7 +78,7 @@ Rectangle {
         font.family: Theme.fontBody
         font.pixelSize: 15
         opacity: input.text.length === 0 && !input.activeFocus ? 1 : 0
-        scale: opacity > 0 ? 1 : 0.96
+        scale: opacity > 0 ? 1 : 0.90
 
         Behavior on opacity {
             Anim { type: Motion.defaultEffects }
