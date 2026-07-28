@@ -10,6 +10,7 @@ Item {
 
     readonly property real clockGap: Math.max(8, Math.round(baseSize * 0.035))
     readonly property real dateSize: Math.max(15, Math.min(20, baseSize * 0.085))
+    readonly property real digitSpacing: -Math.max(4, baseSize * 0.035)
 
     function topOffset(metrics) {
         return metrics.tightBoundingRect.y - metrics.boundingRect.y;
@@ -48,7 +49,7 @@ Item {
                 font.family: Theme.fontDisplay
                 font.pixelSize: root.baseSize
                 font.weight: Font.Normal
-                font.stretch: Font.UltraCondensed
+                font.letterSpacing: root.digitSpacing
                 font.variableAxes: ({ "wdth": 30 })
 
                 TextMetrics {
@@ -68,7 +69,7 @@ Item {
                 font.family: Theme.fontDisplay
                 font.pixelSize: root.baseSize
                 font.weight: Font.Normal
-                font.stretch: Font.UltraCondensed
+                font.letterSpacing: root.digitSpacing
                 font.variableAxes: ({ "wdth": 30 })
 
                 TextMetrics {
