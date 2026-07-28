@@ -8,8 +8,10 @@ Item {
 
     property real baseSize: 180
 
-    readonly property real clockSize: baseSize * 0.88
-    readonly property real clockGap: Math.max(8, Math.round(baseSize * 0.035))
+    readonly property real centerScale: Math.min(1, baseSize / 360)
+    readonly property real headlinePointSize: 224 * centerScale
+    readonly property real titlePointSize: 16 * centerScale
+    readonly property real clockGap: 8 * centerScale
 
     function topOffset(metrics) {
         return metrics.tightBoundingRect.y - metrics.boundingRect.y;
@@ -28,7 +30,7 @@ Item {
 
         anchors.centerIn: parent
         width: Math.max(clockFace.width, dateHolder.width)
-        spacing: Math.max(16, Math.round(root.baseSize * 0.09))
+        spacing: 22 * root.centerScale
 
         Item {
             id: clockFace
@@ -47,9 +49,14 @@ Item {
                 text: Qt.formatTime(systemClock.date, "HH")
                 color: Theme.colorPrimary
                 font.family: Theme.fontHeadline
-                font.pixelSize: root.clockSize
+                font.pointSize: root.headlinePointSize
                 font.weight: Font.Medium
-                font.variableAxes: ({ "wdth": 30, "ROND": 25 })
+                font.variableAxes: ({
+                    "opsz": root.headlinePointSize,
+                    "wght": 500,
+                    "wdth": 30,
+                    "ROND": 25
+                })
 
                 TextMetrics {
                     id: hourMetrics
@@ -66,9 +73,14 @@ Item {
                 text: Qt.formatTime(systemClock.date, "mm")
                 color: Theme.colorSecondary
                 font.family: Theme.fontHeadline
-                font.pixelSize: root.clockSize
+                font.pointSize: root.headlinePointSize
                 font.weight: Font.Medium
-                font.variableAxes: ({ "wdth": 30, "ROND": 25 })
+                font.variableAxes: ({
+                    "opsz": root.headlinePointSize,
+                    "wght": 500,
+                    "wdth": 30,
+                    "ROND": 25
+                })
 
                 TextMetrics {
                     id: minuteMetrics
@@ -82,8 +94,8 @@ Item {
             id: dateHolder
 
             x: Math.round((parent.width - width) / 2)
-            width: dateLabel.implicitWidth + 34
-            height: 42
+            width: dateLabel.implicitWidth
+            height: dateLabel.implicitHeight
 
             Text {
                 id: dateLabel
@@ -92,9 +104,13 @@ Item {
                 text: I18n.formatDate(systemClock.date).toUpperCase()
                 color: Theme.colorText
                 font.family: Theme.fontTitle
-                font.pixelSize: 16
+                font.pointSize: root.titlePointSize
                 font.weight: Font.DemiBold
-                font.variableAxes: ({ "ROND": 25 })
+                font.variableAxes: ({
+                    "opsz": root.titlePointSize,
+                    "wght": 600,
+                    "ROND": 25
+                })
             }
         }
     }
