@@ -9,11 +9,11 @@
   "sessions": [
     {
       "name": "Caelestia",
-      "command": ["/usr/bin/Hyprland"]
+      "command": ["/usr/local/bin/caelestia-session"]
     },
     {
       "name": "Hyprland",
-      "command": ["/usr/bin/Hyprland"]
+      "command": ["/usr/local/bin/caelestia-session"]
     }
   ]
 }
