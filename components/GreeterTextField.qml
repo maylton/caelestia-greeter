@@ -18,54 +18,72 @@ Rectangle {
     signal accepted()
 
     implicitHeight: 54
-    radius: passwordMode ? height / 2 : input.activeFocus ? 12 : 18
-    scale: (0.78 + revealProgress * 0.22)
-        * (input.activeFocus ? 1.028 : 1)
-    color: passwordMode
-        ? Theme.colorSurfaceContainer
-        : input.activeFocus ? Theme.colorFieldActive : Theme.colorField
-    border.width: passwordMode ? 0 : input.activeFocus ? 2 : 1
-    border.color: input.activeFocus ? Theme.colorPrimary : Theme.colorOutline
+    color: "transparent"
+    border.width: 0
     opacity: (root.enabled ? 1 : 0.55) * revealProgress
-    clip: true
+    scale: 0.78 + revealProgress * 0.22
 
     function focusInput(reason) {
         input.forceActiveFocus(reason ?? Qt.OtherFocusReason);
-    }
-
-    Behavior on width {
-        Anim { type: Motion.defaultSpatial }
-    }
-
-    Behavior on radius {
-        Anim { type: Motion.defaultEffects }
     }
 
     Behavior on scale {
         Anim { type: Motion.fastSpatial }
     }
 
-    Behavior on color {
-        CAnim { type: Motion.defaultEffects }
-    }
-
-    Behavior on border.color {
-        CAnim { type: Motion.defaultEffects }
-    }
-
-    Behavior on border.width {
-        Anim { type: Motion.defaultEffects }
-    }
-
     Behavior on opacity {
         Anim { type: Motion.defaultEffects }
+    }
+
+    Rectangle {
+        id: fieldBackground
+
+        anchors.horizontalCenter: parent.horizontalCenter
+        width: root.passwordMode
+            ? (root.passwordHasText
+                ? root.width
+                : Math.min(root.width, root.compactPasswordWidth))
+            : root.width
+        height: parent.height
+        radius: root.passwordMode ? height / 2 : input.activeFocus ? 12 : 18
+        scale: input.activeFocus ? 1.028 : 1
+        color: root.passwordMode
+            ? Theme.colorSurfaceContainer
+            : input.activeFocus ? Theme.colorFieldActive : Theme.colorField
+        border.width: root.passwordMode ? 0 : input.activeFocus ? 2 : 1
+        border.color: input.activeFocus ? Theme.colorPrimary : Theme.colorOutline
+        clip: true
+
+        Behavior on width {
+            Anim { type: Motion.defaultSpatial }
+        }
+
+        Behavior on radius {
+            Anim { type: Motion.defaultEffects }
+        }
+
+        Behavior on scale {
+            Anim { type: Motion.fastSpatial }
+        }
+
+        Behavior on color {
+            CAnim { type: Motion.defaultEffects }
+        }
+
+        Behavior on border.color {
+            CAnim { type: Motion.defaultEffects }
+        }
+
+        Behavior on border.width {
+            Anim { type: Motion.defaultEffects }
+        }
     }
 
     TextInput {
         id: input
 
         anchors {
-            fill: parent
+            fill: fieldBackground
             margins: root.passwordMode ? 8 : 18
         }
         enabled: root.enabled
@@ -89,8 +107,8 @@ Rectangle {
     Item {
         id: passwordLeft
 
-        x: 8
-        anchors.verticalCenter: parent.verticalCenter
+        x: fieldBackground.x + 8
+        anchors.verticalCenter: fieldBackground.verticalCenter
         width: root.passwordSideSize
         height: root.passwordSideSize
         visible: root.passwordMode
@@ -108,9 +126,9 @@ Rectangle {
         id: passwordRight
 
         anchors {
-            right: parent.right
+            right: fieldBackground.right
             rightMargin: 8
-            verticalCenter: parent.verticalCenter
+            verticalCenter: fieldBackground.verticalCenter
         }
         width: root.passwordSideSize
         height: root.passwordSideSize
@@ -176,8 +194,8 @@ Rectangle {
         anchors {
             left: passwordLeft.right
             right: passwordRight.left
-            top: parent.top
-            bottom: parent.bottom
+            top: fieldBackground.top
+            bottom: fieldBackground.bottom
             leftMargin: root.passwordSpacing
             rightMargin: root.passwordSpacing
         }
@@ -226,7 +244,7 @@ Rectangle {
         x: root.passwordMode
             ? passwordCenter.x + Math.round((passwordCenter.width - implicitWidth) / 2)
             : input.x
-        anchors.verticalCenter: parent.verticalCenter
+        anchors.verticalCenter: fieldBackground.verticalCenter
         text: root.placeholderText
         color: Theme.colorTextMuted
         font.family: Theme.fontBody
