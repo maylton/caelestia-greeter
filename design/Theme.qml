@@ -54,6 +54,8 @@ Singleton {
         || configuredFont("headline", "GoogleSansFlex")
     readonly property string fontTitle: Quickshell.env("CAELESTIA_GREETER_FONT_TITLE")
         || configuredFont("title", fontHeadline)
+    readonly property string fontIcon: Quickshell.env("CAELESTIA_GREETER_FONT_ICON")
+        || configuredFont("icon", "Material Symbols Rounded")
 
     FileView {
         id: schemeFile
