@@ -4,8 +4,10 @@ set -euo pipefail
 marker="${XDG_RUNTIME_DIR:-/tmp}/caelestia-greeter-launch-requested"
 rm -f "$marker"
 
+set +e
 /usr/local/bin/caelestia-greeter-session
 status=$?
+set -e
 
 if [[ -f "$marker" ]]; then
     /usr/bin/hyprctl dispatch exit >/dev/null 2>&1 || true
