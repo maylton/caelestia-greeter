@@ -49,7 +49,7 @@ Singleton {
     }
 
     function withAlpha(value, alpha) {
-        return Qt.rgba(value.r, value.g, value.b, alpha);
+        return Qt.alpha(value, alpha);
     }
 
     readonly property color baseText: colour("onSurface", "#efdfe2", "#211a1d")
