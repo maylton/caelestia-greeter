@@ -11,7 +11,8 @@ Rectangle {
 
     implicitWidth: label.implicitWidth + 28
     implicitHeight: 42
-    radius: height / 2
+    radius: mouse.pressed ? 12 : height / 2
+    scale: mouse.pressed ? 0.94 : 1
     color: {
         if (!root.enabled)
             return Theme.colorDisabled;
@@ -25,8 +26,24 @@ Rectangle {
     border.color: root.destructive ? Theme.colorErrorOutline : Theme.colorOutline
     opacity: root.enabled ? 1 : 0.55
 
+    Behavior on radius {
+        Anim { type: Motion.defaultEffects }
+    }
+
+    Behavior on scale {
+        Anim { type: Motion.fastSpatial }
+    }
+
     Behavior on color {
-        ColorAnimation { duration: Theme.durationShort }
+        CAnim { type: Motion.defaultEffects }
+    }
+
+    Behavior on border.color {
+        CAnim { type: Motion.defaultEffects }
+    }
+
+    Behavior on opacity {
+        Anim { type: Motion.defaultEffects }
     }
 
     Text {
@@ -49,6 +66,7 @@ Rectangle {
 
         anchors.fill: parent
         enabled: root.enabled
+        hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         onClicked: root.clicked()
     }
