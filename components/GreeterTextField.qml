@@ -10,17 +10,39 @@ Rectangle {
     signal accepted()
 
     implicitHeight: 54
-    radius: 18
+    radius: input.activeFocus ? 14 : 18
+    scale: input.activeFocus ? 1.012 : 1
     color: input.activeFocus ? Theme.colorFieldActive : Theme.colorField
     border.width: input.activeFocus ? 2 : 1
     border.color: input.activeFocus ? Theme.colorPrimary : Theme.colorOutline
+    opacity: root.enabled ? 1 : 0.55
 
     function focusInput(reason) {
         input.forceActiveFocus(reason ?? Qt.OtherFocusReason);
     }
 
+    Behavior on radius {
+        Anim { type: Motion.defaultEffects }
+    }
+
+    Behavior on scale {
+        Anim { type: Motion.fastSpatial }
+    }
+
     Behavior on color {
-        ColorAnimation { duration: Theme.durationShort }
+        CAnim { type: Motion.defaultEffects }
+    }
+
+    Behavior on border.color {
+        CAnim { type: Motion.defaultEffects }
+    }
+
+    Behavior on border.width {
+        Anim { type: Motion.defaultEffects }
+    }
+
+    Behavior on opacity {
+        Anim { type: Motion.defaultEffects }
     }
 
     TextInput {
@@ -49,10 +71,19 @@ Rectangle {
             left: input.left
             verticalCenter: parent.verticalCenter
         }
-        visible: input.text.length === 0 && !input.activeFocus
         text: root.placeholderText
         color: Theme.colorTextMuted
         font.family: Theme.fontBody
         font.pixelSize: 15
+        opacity: input.text.length === 0 && !input.activeFocus ? 1 : 0
+        scale: opacity > 0 ? 1 : 0.96
+
+        Behavior on opacity {
+            Anim { type: Motion.defaultEffects }
+        }
+
+        Behavior on scale {
+            Anim { type: Motion.fastSpatial }
+        }
     }
 }
