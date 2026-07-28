@@ -6,8 +6,8 @@ A Material Expressive login screen for Caelestia Shell, built with QML, Quickshe
 
 - Caelestia wallpaper and Material 3 colour scheme.
 - Caelestia expressive spatial and effect motion curves.
+- Clock and date matching the Caelestia lock screen.
 - Animated Material password glyphs matching the Caelestia lock screen.
-- Stacked and horizontal clock layouts.
 - Brazilian Portuguese and English.
 - Automatic user, display-name and avatar detection.
 - greetd authentication and session launch.
@@ -41,7 +41,6 @@ Preview mode uses the current user's Caelestia state:
 Useful overrides:
 
 ```bash
-CAELESTIA_GREETER_CLOCK_LAYOUT=horizontal ./scripts/run-preview.sh
 CAELESTIA_GREETER_LANGUAGE=pt-BR ./scripts/run-preview.sh
 CAELESTIA_GREETER_USER=user ./scripts/run-preview.sh
 CAELESTIA_GREETER_AVATAR=/path/to/avatar.png ./scripts/run-preview.sh
@@ -55,7 +54,6 @@ Defaults live in `config/defaults.json`:
 
 ```json
 {
-  "clockLayout": "stacked",
   "defaultUser": "",
   "displayName": "",
   "avatar": "",
