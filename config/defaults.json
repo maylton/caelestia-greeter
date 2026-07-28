@@ -10,10 +10,6 @@
     {
       "name": "Caelestia",
       "command": ["/usr/local/bin/caelestia-session"]
-    },
-    {
-      "name": "Hyprland",
-      "command": ["/usr/local/bin/caelestia-session"]
     }
   ]
 }
