@@ -12,6 +12,50 @@ Singleton {
     readonly property string fontDisplay: Quickshell.env("CAELESTIA_GREETER_FONT_DISPLAY") || "Inter Display"
 
     FileView {
+        id: shellConfigFile
+
+        path: Config.shellConfigPath
+        blockLoading: true
+        watchChanges: true
+        printErrors: false
+    }
+
+    readonly property var shellConfigData: {
+        try {
+            const contents = shellConfigFile.text();
+            if (!contents || contents.trim().length === 0)
+                return ({});
+
+            const parsed = JSON.parse(contents);
+            return parsed && typeof parsed === "object" ? parsed : ({});
+        } catch (error) {
+            console.warn("Caelestia Greeter: invalid Caelestia shell config:", error);
+            return ({});
+        }
+    }
+
+    readonly property var shellFontConfig: shellConfigData.appearance
+        && typeof shellConfigData.appearance === "object"
+        && shellConfigData.appearance.font
+        && typeof shellConfigData.appearance.font === "object"
+        ? shellConfigData.appearance.font
+        : ({})
+
+    function configuredFont(style, fallback) {
+        const config = root.shellFontConfig[style];
+        if (config && typeof config === "object"
+                && typeof config.family === "string"
+                && config.family.length > 0)
+            return config.family;
+        return fallback;
+    }
+
+    readonly property string fontHeadline: Quickshell.env("CAELESTIA_GREETER_FONT_HEADLINE")
+        || configuredFont("headline", "GoogleSansFlex")
+    readonly property string fontTitle: Quickshell.env("CAELESTIA_GREETER_FONT_TITLE")
+        || configuredFont("title", fontHeadline)
+
+    FileView {
         id: schemeFile
 
         path: Config.schemePath
