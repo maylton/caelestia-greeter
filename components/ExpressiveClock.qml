@@ -6,15 +6,7 @@ import "../i18n"
 Item {
     id: root
 
-    property real baseSize: 210
-
-    readonly property real clockGap: Math.max(8, Math.round(baseSize * 0.035))
-    readonly property real dateSize: Math.max(15, Math.min(20, baseSize * 0.085))
-    readonly property real digitSpacing: -Math.max(4, baseSize * 0.035)
-
-    function topOffset(metrics) {
-        return metrics.tightBoundingRect.y - metrics.boundingRect.y;
-    }
+    property real baseSize: 180
 
     implicitWidth: content.implicitWidth
     implicitHeight: content.implicitHeight
@@ -28,67 +20,51 @@ Item {
         id: content
 
         anchors.centerIn: parent
-        spacing: Math.max(16, Math.round(root.baseSize * 0.09))
+        spacing: 16
 
-        Item {
-            id: clockFace
-
+        Column {
             anchors.horizontalCenter: parent.horizontalCenter
-            implicitWidth: hours.implicitWidth + minutes.implicitWidth + root.clockGap
-            implicitHeight: Math.max(
-                hourMetrics.tightBoundingRect.height,
-                minuteMetrics.tightBoundingRect.height
-            )
+            spacing: -Math.round(root.baseSize * 0.18)
 
             Text {
-                id: hours
-
-                y: -root.topOffset(hourMetrics)
+                anchors.horizontalCenter: parent.horizontalCenter
                 text: Qt.formatTime(systemClock.date, "HH")
-                color: Theme.colorPrimary
+                color: Theme.colorText
                 font.family: Theme.fontDisplay
-                font.pixelSize: root.baseSize
-                font.weight: Font.Normal
-                font.letterSpacing: root.digitSpacing
-                font.variableAxes: ({ "wdth": 30 })
-
-                TextMetrics {
-                    id: hourMetrics
-                    text: hours.text
-                    font: hours.font
-                }
+                font.pixelSize: root.baseSize * 0.74
+                font.weight: Font.Bold
+                font.letterSpacing: -4
             }
 
             Text {
-                id: minutes
-
-                anchors.right: parent.right
-                y: -root.topOffset(minuteMetrics)
+                anchors.horizontalCenter: parent.horizontalCenter
                 text: Qt.formatTime(systemClock.date, "mm")
-                color: Theme.colorSecondary
+                color: Theme.colorText
                 font.family: Theme.fontDisplay
-                font.pixelSize: root.baseSize
-                font.weight: Font.Normal
-                font.letterSpacing: root.digitSpacing
-                font.variableAxes: ({ "wdth": 30 })
-
-                TextMetrics {
-                    id: minuteMetrics
-                    text: minutes.text
-                    font: minutes.font
-                }
+                font.pixelSize: root.baseSize * 0.74
+                font.weight: Font.Bold
+                font.letterSpacing: -4
             }
         }
 
-        Text {
-            id: dateLabel
-
+        Rectangle {
             anchors.horizontalCenter: parent.horizontalCenter
-            text: I18n.formatDate(systemClock.date).toUpperCase()
-            color: Theme.colorText
-            font.family: Theme.fontBody
-            font.pixelSize: root.dateSize
-            font.weight: Font.DemiBold
+            width: dateLabel.implicitWidth + 34
+            height: 42
+            radius: height / 2
+            color: Theme.colorTertiaryContainer
+            border.color: Theme.colorOutline
+
+            Text {
+                id: dateLabel
+
+                anchors.centerIn: parent
+                text: I18n.formatDate(systemClock.date)
+                color: Theme.colorTertiaryContainerText
+                font.family: Theme.fontBody
+                font.pixelSize: 16
+                font.weight: Font.DemiBold
+            }
         }
     }
 }
