@@ -116,7 +116,7 @@ Singleton {
     Timer {
         id: launchDelay
 
-        interval: Motion.duration(Motion.fastSpatial)
+        interval: Motion.duration(Motion.defaultSpatial)
         onTriggered: root.requestSessionLaunch()
     }
 
