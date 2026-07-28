@@ -46,7 +46,21 @@ Item {
             Anim {
                 target: clockLoader
                 property: "scale"
-                to: 0.82
+                to: 0.54
+                type: Motion.fastSpatial
+            }
+
+            Anim {
+                target: clockLoader
+                property: "rotation"
+                to: -9
+                type: Motion.fastSpatial
+            }
+
+            Anim {
+                target: dateBadge
+                property: "scale"
+                to: 0.90
                 type: Motion.fastSpatial
             }
         }
@@ -55,6 +69,12 @@ Item {
             target: root
             property: "displayedLayout"
             value: root.layoutMode
+        }
+
+        PropertyAction {
+            target: clockLoader
+            property: "rotation"
+            value: 9
         }
 
         ParallelAnimation {
@@ -67,6 +87,20 @@ Item {
 
             Anim {
                 target: clockLoader
+                property: "scale"
+                to: 1
+                type: Motion.fastSpatial
+            }
+
+            Anim {
+                target: clockLoader
+                property: "rotation"
+                to: 0
+                type: Motion.fastSpatial
+            }
+
+            Anim {
+                target: dateBadge
                 property: "scale"
                 to: 1
                 type: Motion.fastSpatial
@@ -87,15 +121,19 @@ Item {
             sourceComponent: root.displayedLayout === "horizontal"
                 ? horizontalClock
                 : stackedClock
+            transformOrigin: Item.Center
         }
 
         Rectangle {
+            id: dateBadge
+
             anchors.horizontalCenter: parent.horizontalCenter
             width: dateLabel.implicitWidth + 34
             height: 42
             radius: height / 2
             color: Theme.colorTertiaryContainer
             border.color: Theme.colorOutline
+            transformOrigin: Item.Center
 
             Text {
                 id: dateLabel
