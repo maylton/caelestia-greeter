@@ -1,5 +1,5 @@
 import QtQuick
-import "../design/Tokens.js" as Tokens
+import "../design"
 
 Rectangle {
     id: root
@@ -14,33 +14,39 @@ Rectangle {
     radius: height / 2
     color: {
         if (!root.enabled)
-            return Tokens.colorDisabled;
+            return Theme.colorDisabled;
         if (mouse.pressed)
-            return root.destructive ? Tokens.colorErrorContainerPressed : Tokens.colorSurfacePressed;
+            return root.destructive ? Theme.colorErrorContainerPressed : Theme.colorSurfacePressed;
         if (root.selected)
-            return Tokens.colorSecondaryContainer;
-        return root.destructive ? Tokens.colorErrorContainer : Tokens.colorSurfaceContainer;
+            return Theme.colorSecondaryContainer;
+        return root.destructive ? Theme.colorErrorContainer : Theme.colorSurfaceContainer;
     }
     border.width: root.selected ? 0 : 1
-    border.color: root.destructive ? Tokens.colorErrorOutline : Tokens.colorOutline
+    border.color: root.destructive ? Theme.colorErrorOutline : Theme.colorOutline
     opacity: root.enabled ? 1 : 0.55
+
+    Behavior on color {
+        ColorAnimation { duration: Theme.durationShort }
+    }
 
     Text {
         id: label
+
         anchors.centerIn: parent
         text: root.text
         color: {
             if (root.destructive)
-                return Tokens.colorErrorContainerText;
-            return root.selected ? Tokens.colorSecondaryContainerText : Tokens.colorText;
+                return Theme.colorErrorContainerText;
+            return root.selected ? Theme.colorSecondaryContainerText : Theme.colorText;
         }
-        font.family: Tokens.fontBody
+        font.family: Theme.fontBody
         font.pixelSize: 13
         font.weight: Font.DemiBold
     }
 
     MouseArea {
         id: mouse
+
         anchors.fill: parent
         enabled: root.enabled
         cursorShape: Qt.PointingHandCursor
