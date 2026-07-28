@@ -57,27 +57,79 @@ Rectangle {
             margins: 18
         }
         enabled: root.enabled
-        color: Theme.colorText
-        selectionColor: Theme.colorPrimaryContainer
-        selectedTextColor: Theme.colorPrimaryContainerText
+        color: root.passwordMode ? "transparent" : Theme.colorText
+        selectionColor: root.passwordMode
+            ? "transparent"
+            : Theme.colorPrimaryContainer
+        selectedTextColor: root.passwordMode
+            ? "transparent"
+            : Theme.colorPrimaryContainerText
         font.family: Theme.fontBody
         font.pixelSize: 15
-        echoMode: root.passwordMode ? TextInput.Password : TextInput.Normal
-        passwordCharacter: "●"
+        echoMode: root.passwordMode ? TextInput.NoEcho : TextInput.Normal
+        cursorVisible: !root.passwordMode && activeFocus
+        inputMethodHints: root.passwordMode
+            ? Qt.ImhSensitiveData | Qt.ImhNoPredictiveText
+            : Qt.ImhNone
         clip: true
         onAccepted: root.accepted()
     }
 
-    Text {
+    Loader {
+        id: passwordGlyphLoader
+
         anchors {
             left: input.left
+            right: input.right
+            verticalCenter: parent.verticalCenter
+        }
+        height: 28
+        active: root.passwordMode
+        source: "PasswordGlyphs.qml"
+        visible: active && input.text.length > 0 && status === Loader.Ready
+
+        onLoaded: {
+            item.buffer = Qt.binding(() => input.text);
+            item.glyphColor = Qt.binding(() => Theme.colorText);
+            item.glyphSize = 18;
+        }
+    }
+
+    Row {
+        anchors.centerIn: passwordGlyphLoader
+        spacing: 5
+        visible: root.passwordMode
+            && input.text.length > 0
+            && passwordGlyphLoader.status !== Loader.Ready
+
+        Repeater {
+            model: input.text.length
+
+            delegate: Rectangle {
+                required property int index
+
+                width: 10
+                height: 10
+                radius: width / 2
+                color: Theme.colorText
+            }
+        }
+    }
+
+    Text {
+        anchors {
+            left: root.passwordMode ? undefined : input.left
+            horizontalCenter: root.passwordMode ? parent.horizontalCenter : undefined
             verticalCenter: parent.verticalCenter
         }
         text: root.placeholderText
         color: Theme.colorTextMuted
         font.family: Theme.fontBody
         font.pixelSize: 15
-        opacity: input.text.length === 0 && !input.activeFocus ? 1 : 0
+        opacity: input.text.length === 0
+            && (root.passwordMode || !input.activeFocus)
+            ? 1
+            : 0
         scale: opacity > 0 ? 1 : 0.90
 
         Behavior on opacity {
