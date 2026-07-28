@@ -8,7 +8,14 @@ Item {
 
     property real baseSize: 180
 
-    implicitWidth: content.implicitWidth
+    readonly property real clockSize: baseSize * 0.88
+    readonly property real clockGap: Math.max(8, Math.round(baseSize * 0.035))
+
+    function topOffset(metrics) {
+        return metrics.tightBoundingRect.y - metrics.boundingRect.y;
+    }
+
+    implicitWidth: content.width
     implicitHeight: content.implicitHeight
 
     SystemClock {
@@ -20,40 +27,63 @@ Item {
         id: content
 
         anchors.centerIn: parent
-        spacing: 16
+        width: Math.max(clockFace.width, dateHolder.width)
+        spacing: Math.max(16, Math.round(root.baseSize * 0.09))
 
-        Column {
-            anchors.horizontalCenter: parent.horizontalCenter
-            spacing: -Math.round(root.baseSize * 0.18)
+        Item {
+            id: clockFace
+
+            x: Math.round((parent.width - width) / 2)
+            width: hours.implicitWidth + minutes.implicitWidth + root.clockGap
+            height: Math.max(
+                hourMetrics.tightBoundingRect.height,
+                minuteMetrics.tightBoundingRect.height
+            )
 
             Text {
-                anchors.horizontalCenter: parent.horizontalCenter
+                id: hours
+
+                y: -root.topOffset(hourMetrics)
                 text: Qt.formatTime(systemClock.date, "HH")
-                color: Theme.colorText
+                color: Theme.colorPrimary
                 font.family: Theme.fontHeadline
-                font.pixelSize: root.baseSize * 0.74
-                font.weight: Font.Bold
-                font.letterSpacing: -4
+                font.pixelSize: root.clockSize
+                font.weight: Font.Medium
+                font.variableAxes: ({ "wdth": 30, "ROND": 25 })
+
+                TextMetrics {
+                    id: hourMetrics
+                    text: hours.text
+                    font: hours.font
+                }
             }
 
             Text {
-                anchors.horizontalCenter: parent.horizontalCenter
+                id: minutes
+
+                anchors.right: parent.right
+                y: -root.topOffset(minuteMetrics)
                 text: Qt.formatTime(systemClock.date, "mm")
-                color: Theme.colorText
+                color: Theme.colorSecondary
                 font.family: Theme.fontHeadline
-                font.pixelSize: root.baseSize * 0.74
-                font.weight: Font.Bold
-                font.letterSpacing: -4
+                font.pixelSize: root.clockSize
+                font.weight: Font.Medium
+                font.variableAxes: ({ "wdth": 30, "ROND": 25 })
+
+                TextMetrics {
+                    id: minuteMetrics
+                    text: minutes.text
+                    font: minutes.font
+                }
             }
         }
 
-        Rectangle {
-            anchors.horizontalCenter: parent.horizontalCenter
+        Item {
+            id: dateHolder
+
+            x: Math.round((parent.width - width) / 2)
             width: dateLabel.implicitWidth + 34
             height: 42
-            radius: height / 2
-            color: "transparent"
-            border.width: 0
 
             Text {
                 id: dateLabel
@@ -64,6 +94,7 @@ Item {
                 font.family: Theme.fontTitle
                 font.pixelSize: 16
                 font.weight: Font.DemiBold
+                font.variableAxes: ({ "ROND": 25 })
             }
         }
     }
