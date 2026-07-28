@@ -133,9 +133,15 @@ profile_tmp="$profile_file.tmp"
     printf 'CAELESTIA_GREETER_USER=%q\n' "$user"
     printf 'CAELESTIA_GREETER_DISPLAY_NAME=%q\n' "$display_name"
     printf 'CAELESTIA_GREETER_STATE_DIR=%q\n' "$state_cache"
-    [[ -n "$avatar_cache" ]] && printf 'CAELESTIA_GREETER_AVATAR=%q\n' "$avatar_cache"
-    [[ -n "$scheme_cache" ]] && printf 'CAELESTIA_GREETER_SCHEME_PATH=%q\n' "$scheme_cache"
-    [[ -n "$wallpaper_cache" ]] && printf 'CAELESTIA_GREETER_WALLPAPER=%q\n' "$wallpaper_cache"
+    if [[ -n "$avatar_cache" ]]; then
+        printf 'CAELESTIA_GREETER_AVATAR=%q\n' "$avatar_cache"
+    fi
+    if [[ -n "$scheme_cache" ]]; then
+        printf 'CAELESTIA_GREETER_SCHEME_PATH=%q\n' "$scheme_cache"
+    fi
+    if [[ -n "$wallpaper_cache" ]]; then
+        printf 'CAELESTIA_GREETER_WALLPAPER=%q\n' "$wallpaper_cache"
+    fi
 } >"$profile_tmp"
 
 chmod 0644 "$profile_tmp"
