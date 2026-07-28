@@ -26,6 +26,8 @@ Rectangle {
         : I18n.t("login.welcome")
     readonly property bool hasMessage: AuthService.errorMessage.length > 0
         || AuthService.statusMessage.length > 0
+    readonly property int actionButtonWidth: 142
+    readonly property int actionButtonHeight: 48
 
     signal closeRequested()
 
@@ -355,14 +357,18 @@ Rectangle {
             }
 
             ActionChip {
+                width: root.actionButtonWidth
+                height: root.actionButtonHeight
+                defaultRadius: 18
+                pressedRadius: 10
                 text: I18n.t("login.back")
                 enabled: !AuthService.busy
                 onClicked: root.closeRequested()
             }
 
             Rectangle {
-                width: 142
-                height: 48
+                width: root.actionButtonWidth
+                height: root.actionButtonHeight
                 radius: submitMouse.pressed ? 10 : 18
                 scale: submitMouse.pressed ? 0.88 : 1
                 color: submitMouse.pressed ? Theme.colorPrimaryPressed : Theme.colorPrimary
