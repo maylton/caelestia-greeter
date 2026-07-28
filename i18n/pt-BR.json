@@ -1,6 +1,6 @@
 {
   "date": {
-    "pattern": "dddd • d MMM"
+    "pattern": "dddd, d 'de' MMMM"
   },
   "idle": {
     "prompt": "Clique ou pressione uma tecla para entrar"
