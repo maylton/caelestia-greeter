@@ -13,6 +13,8 @@ PanelWindow {
     readonly property bool interactiveScreen: modelData === Quickshell.screens[0]
     property bool loginOpen: Config.loginStartsOpen
     property string clockLayout: Config.clockLayout
+    property real loginSpatial: loginOpen ? 1 : 0
+    property real loginEffects: loginOpen ? 1 : 0
 
     screen: modelData
     color: "transparent"
@@ -32,8 +34,20 @@ PanelWindow {
         : WlrKeyboardFocus.None
     WlrLayershell.namespace: "caelestia-greeter"
 
+    Behavior on loginSpatial {
+        Anim { type: Motion.defaultSpatial }
+    }
+
+    Behavior on loginEffects {
+        Anim { type: Motion.defaultEffects }
+    }
+
     Item {
         id: scene
+
+        property real backgroundProgress: 0
+        property real spatialProgress: 0
+        property real effectProgress: 0
 
         anchors.fill: parent
         focus: window.interactiveScreen
@@ -55,16 +69,53 @@ PanelWindow {
             }
         }
 
+        ParallelAnimation {
+            running: true
+
+            Anim {
+                target: scene
+                property: "backgroundProgress"
+                from: 0
+                to: 1
+                type: Motion.standardLarge
+            }
+
+            Anim {
+                target: scene
+                property: "spatialProgress"
+                from: 0
+                to: 1
+                type: Motion.fastSpatial
+            }
+
+            SequentialAnimation {
+                PauseAnimation { duration: 60 }
+
+                Anim {
+                    target: scene
+                    property: "effectProgress"
+                    from: 0
+                    to: 1
+                    type: Motion.defaultEffects
+                }
+            }
+        }
+
         Image {
+            id: wallpaper
+
             anchors.fill: parent
             source: Config.wallpaperSource
             fillMode: Image.PreserveAspectCrop
             asynchronous: true
             cache: true
+            opacity: scene.backgroundProgress
+            scale: 1.035 - scene.spatialProgress * 0.035
         }
 
         Rectangle {
             anchors.fill: parent
+            opacity: scene.backgroundProgress
 
             gradient: Gradient {
                 GradientStop { position: 0.0; color: Theme.scrimTop }
@@ -75,11 +126,10 @@ PanelWindow {
 
         Rectangle {
             anchors.fill: parent
-            color: window.loginOpen ? Theme.loginScrim : "transparent"
-
-            Behavior on color {
-                ColorAnimation { duration: Theme.durationMedium }
-            }
+            color: Qt.alpha(
+                Theme.loginScrim,
+                Theme.loginScrim.a * window.loginEffects * scene.effectProgress
+            )
         }
 
         MouseArea {
@@ -92,31 +142,32 @@ PanelWindow {
         ExpressiveClock {
             id: clock
 
+            readonly property real closedY: Math.round((scene.height - height) / 2 - 26)
+            readonly property real openY: Math.max(52, scene.height * 0.10)
+
             layoutMode: window.clockLayout
             baseSize: Math.max(112, Math.min(scene.width * 0.16, scene.height * 0.25))
             x: Math.round((scene.width - width) / 2)
-            y: window.loginOpen
-                ? Math.max(52, scene.height * 0.10)
-                : Math.round((scene.height - height) / 2 - 26)
-
-            Behavior on y {
-                NumberAnimation {
-                    duration: Theme.durationLong
-                    easing.type: Easing.OutBack
-                    easing.overshoot: 1.04
-                }
-            }
+            y: closedY + (openY - closedY) * window.loginSpatial
+            opacity: scene.effectProgress
+            scale: (0.78 + scene.spatialProgress * 0.22)
+                * (1 - window.loginSpatial * 0.02)
         }
 
         LoginSurface {
             id: loginSurface
 
+            readonly property real targetY: Math.min(
+                scene.height - height - 84,
+                clock.y + clock.height + 34
+            )
+
             visible: window.interactiveScreen
             width: Math.min(540, scene.width - 40)
             x: Math.round((scene.width - width) / 2)
-            y: Math.min(scene.height - height - 84, clock.y + clock.height + 34)
-            opacity: window.loginOpen ? 1 : 0
-            scale: window.loginOpen ? 1 : 0.94
+            y: targetY + (1 - window.loginSpatial) * 28
+            opacity: scene.effectProgress * window.loginEffects
+            scale: 0.92 + scene.spatialProgress * window.loginSpatial * 0.08
             enabled: window.loginOpen
             active: window.loginOpen
             defaultUser: Config.defaultUser
@@ -129,38 +180,31 @@ PanelWindow {
                 window.loginOpen = false;
                 scene.forceActiveFocus();
             }
-
-            Behavior on opacity {
-                NumberAnimation { duration: Theme.durationMedium }
-            }
-
-            Behavior on scale {
-                NumberAnimation {
-                    duration: Theme.durationLong
-                    easing.type: Easing.OutBack
-                    easing.overshoot: 1.08
-                }
-            }
         }
 
         Text {
-            visible: window.interactiveScreen && !window.loginOpen
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: 48
+            anchors.bottomMargin: 48 - (1 - window.loginSpatial) * 4
             text: I18n.t("idle.prompt")
             color: Theme.colorTextMuted
             font.family: Theme.fontBody
             font.pixelSize: 14
             font.weight: Font.Medium
+            opacity: scene.effectProgress * (1 - window.loginEffects)
+            scale: 0.96 + (1 - window.loginSpatial) * 0.04
         }
 
         Row {
-            visible: window.interactiveScreen
             anchors.right: parent.right
             anchors.bottom: parent.bottom
             anchors.margins: 24
             spacing: 10
+            visible: window.interactiveScreen
+            opacity: scene.effectProgress
+            transform: Translate {
+                y: (1 - scene.spatialProgress) * 16
+            }
 
             ActionChip {
                 text: window.clockLayout === "stacked"
@@ -185,7 +229,6 @@ PanelWindow {
         }
 
         Rectangle {
-            visible: AuthService.previewMode && window.interactiveScreen
             anchors.left: parent.left
             anchors.bottom: parent.bottom
             anchors.margins: 24
@@ -194,6 +237,9 @@ PanelWindow {
             radius: height / 2
             color: Theme.colorSurfaceContainer
             border.color: Theme.colorOutline
+            visible: AuthService.previewMode && window.interactiveScreen
+            opacity: scene.effectProgress
+            scale: 0.9 + scene.spatialProgress * 0.1
 
             Text {
                 id: previewLabel
