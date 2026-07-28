@@ -5,6 +5,7 @@ A Material Expressive login screen for Caelestia Shell, built with QML, Quickshe
 ## Features
 
 - Caelestia wallpaper and Material 3 colour scheme.
+- Caelestia expressive spatial and effect motion curves.
 - Stacked and horizontal clock layouts.
 - Brazilian Portuguese and English.
 - Automatic user, display-name and avatar detection.
@@ -106,7 +107,7 @@ The profile synchronizer copies the selected user's avatar, wallpaper and colour
 
 - `components/`: interface components.
 - `config/`: defaults and environment overrides.
-- `design/`: dynamic Caelestia theme bridge.
+- `design/`: dynamic theme and motion tokens.
 - `i18n/`: translation catalogs.
 - `services/`: authentication and power actions.
 - `packaging/`: greetd, Hyprland and systemd configuration.
