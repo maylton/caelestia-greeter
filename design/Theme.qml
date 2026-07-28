@@ -11,6 +11,17 @@ Singleton {
     readonly property string fontBody: Quickshell.env("CAELESTIA_GREETER_FONT_BODY") || "Inter"
     readonly property string fontDisplay: Quickshell.env("CAELESTIA_GREETER_FONT_DISPLAY") || "Inter Display"
 
+    FontLoader {
+        id: googleSansFlexLoader
+
+        source: Config.googleSansFlexSource
+
+        onStatusChanged: {
+            if (status === FontLoader.Error)
+                console.warn("Caelestia Greeter: could not load Google Sans Flex from", source);
+        }
+    }
+
     FileView {
         id: shellConfigFile
 
@@ -50,10 +61,23 @@ Singleton {
         return fallback;
     }
 
+    function isGoogleSansFlex(family) {
+        return (family || "").replace(/[^a-z0-9]/gi, "").toLowerCase() === "googlesansflex";
+    }
+
+    function resolvedFont(style, fallback) {
+        const configured = configuredFont(style, fallback);
+        if (isGoogleSansFlex(configured)
+                && googleSansFlexLoader.status === FontLoader.Ready
+                && googleSansFlexLoader.name)
+            return googleSansFlexLoader.name;
+        return configured;
+    }
+
     readonly property string fontHeadline: Quickshell.env("CAELESTIA_GREETER_FONT_HEADLINE")
-        || configuredFont("headline", "GoogleSansFlex")
+        || resolvedFont("headline", "GoogleSansFlex")
     readonly property string fontTitle: Quickshell.env("CAELESTIA_GREETER_FONT_TITLE")
-        || configuredFont("title", fontHeadline)
+        || resolvedFont("title", fontHeadline)
     readonly property string fontIcon: Quickshell.env("CAELESTIA_GREETER_FONT_ICON")
         || configuredFont("icon", "Material Symbols Rounded")
 
