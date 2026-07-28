@@ -12,7 +12,6 @@ PanelWindow {
     required property var modelData
     readonly property bool interactiveScreen: modelData === Quickshell.screens[0]
     property bool loginOpen: Config.loginStartsOpen
-    property string clockLayout: Config.clockLayout
     property real loginSpatial: loginOpen ? 1 : 0
     property real loginEffects: loginOpen ? 1 : 0
     property real exitSpatial: AuthService.launching ? 1 : 0
@@ -159,8 +158,7 @@ PanelWindow {
             readonly property real closedY: Math.round((scene.height - height) / 2 - 26)
             readonly property real openY: Math.max(52, scene.height * 0.10)
 
-            layoutMode: window.clockLayout
-            baseSize: Math.max(112, Math.min(scene.width * 0.16, scene.height * 0.25))
+            baseSize: Math.max(150, Math.min(scene.width * 0.13, scene.height * 0.22))
             x: Math.round((scene.width - width) / 2)
             y: closedY
                 + (openY - closedY) * window.loginSpatial
@@ -244,16 +242,6 @@ PanelWindow {
             transform: Translate {
                 y: (1 - scene.spatialProgress) * 42
                     + window.exitSpatial * 32
-            }
-
-            ActionChip {
-                text: window.clockLayout === "stacked"
-                    ? I18n.t("clock.stacked")
-                    : I18n.t("clock.horizontal")
-                selected: true
-                onClicked: window.clockLayout = window.clockLayout === "stacked"
-                    ? "horizontal"
-                    : "stacked"
             }
 
             ActionChip {
