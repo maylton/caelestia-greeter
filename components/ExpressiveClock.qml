@@ -7,14 +7,71 @@ Item {
     id: root
 
     property string layoutMode: "stacked"
+    property string displayedLayout: layoutMode
     property real baseSize: 180
+    property bool ready: false
 
     implicitWidth: content.implicitWidth
     implicitHeight: content.implicitHeight
 
+    Component.onCompleted: {
+        displayedLayout = layoutMode;
+        ready = true;
+    }
+
+    onLayoutModeChanged: {
+        if (!ready) {
+            displayedLayout = layoutMode;
+            return;
+        }
+        layoutAnimation.restart();
+    }
+
     SystemClock {
         id: systemClock
         precision: SystemClock.Minutes
+    }
+
+    SequentialAnimation {
+        id: layoutAnimation
+
+        ParallelAnimation {
+            Anim {
+                target: clockLoader
+                property: "opacity"
+                to: 0
+                type: Motion.fastEffects
+            }
+
+            Anim {
+                target: clockLoader
+                property: "scale"
+                to: 0.82
+                type: Motion.fastSpatial
+            }
+        }
+
+        PropertyAction {
+            target: root
+            property: "displayedLayout"
+            value: root.layoutMode
+        }
+
+        ParallelAnimation {
+            Anim {
+                target: clockLoader
+                property: "opacity"
+                to: 1
+                type: Motion.defaultEffects
+            }
+
+            Anim {
+                target: clockLoader
+                property: "scale"
+                to: 1
+                type: Motion.fastSpatial
+            }
+        }
     }
 
     Column {
@@ -24,8 +81,10 @@ Item {
         spacing: 16
 
         Loader {
+            id: clockLoader
+
             anchors.horizontalCenter: parent.horizontalCenter
-            sourceComponent: root.layoutMode === "horizontal"
+            sourceComponent: root.displayedLayout === "horizontal"
                 ? horizontalClock
                 : stackedClock
         }
