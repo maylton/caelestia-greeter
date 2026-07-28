@@ -5,15 +5,11 @@
   "avatar": "",
   "language": "system",
   "loginStartsOpen": true,
-  "wallpaper": "assets/default-wallpaper.svg",
+  "wallpaper": "caelestia",
   "sessions": [
     {
-      "name": "Lumina Shell",
-      "command": ["/usr/bin/niri-session"]
-    },
-    {
-      "name": "Niri",
-      "command": ["/usr/bin/niri-session"]
+      "name": "Caelestia",
+      "command": ["/usr/local/bin/caelestia-session"]
     }
   ]
 }

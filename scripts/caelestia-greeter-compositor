@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-service_user="${LUMINA_GREETER_SERVICE_USER:-$(id -un)}"
+service_user="${CAELESTIA_GREETER_SERVICE_USER:-$(id -un)}"
 passwd_entry="$(getent passwd "$service_user" || true)"
 
 if [[ -n "$passwd_entry" ]]; then
@@ -12,10 +12,8 @@ else
 fi
 
 service_home="${service_home:-/var/lib/greetd}"
-cache_dir="${LUMINA_GREETER_COMPOSITOR_CACHE_DIR:-/var/cache/lumina-greeter/runtime-$service_user}"
+cache_dir="${CAELESTIA_GREETER_COMPOSITOR_CACHE_DIR:-/var/cache/caelestia-greeter/runtime-$service_user}"
 
-# greetd may start the compositor with HOME unset or set to /. Mesa would then
-# try to create //.cache and emit a permission error.
 if [[ -z "${HOME:-}" || "$HOME" == "/" ]]; then
     export HOME="$service_home"
 fi
@@ -25,9 +23,17 @@ if [[ -z "${XDG_CACHE_HOME:-}" || ! -d "$XDG_CACHE_HOME" || ! -w "$XDG_CACHE_HOM
 fi
 
 if ! mkdir -p "$XDG_CACHE_HOME" 2>/dev/null || [[ ! -w "$XDG_CACHE_HOME" ]]; then
-    export XDG_CACHE_HOME="/tmp/lumina-greeter-cache-$service_uid"
+    export XDG_CACHE_HOME="/tmp/caelestia-greeter-cache-$service_uid"
     mkdir -p "$XDG_CACHE_HOME"
     chmod 0700 "$XDG_CACHE_HOME"
 fi
 
-exec /usr/bin/niri --config /etc/greetd/lumina-greeter-niri.kdl
+export XDG_CURRENT_DESKTOP=Hyprland
+export XDG_SESSION_DESKTOP=Hyprland
+export XDG_SESSION_TYPE=wayland
+
+if command -v start-hyprland >/dev/null 2>&1; then
+    exec start-hyprland -- -c /etc/greetd/caelestia-greeter-hyprland.conf
+fi
+
+exec /usr/bin/Hyprland --config /etc/greetd/caelestia-greeter-hyprland.conf

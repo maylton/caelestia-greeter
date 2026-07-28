@@ -18,9 +18,9 @@
     "description": "Demonstração local — nenhuma sessão será iniciada"
   },
   "login": {
-    "welcome": "Bem-vindo ao Lumina",
+    "welcome": "Bem-vindo ao Caelestia",
     "welcomeUser": "Bem-vindo, %1",
-    "subtitle": "Entre para iniciar sua sessão",
+    "subtitle": "Entre para iniciar sua sessão do Caelestia",
     "username": "Nome de usuário",
     "password": "Senha",
     "session": "Sessão",

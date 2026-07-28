@@ -18,9 +18,9 @@
     "description": "Local preview — no session will be started"
   },
   "login": {
-    "welcome": "Welcome to Lumina",
+    "welcome": "Welcome to Caelestia",
     "welcomeUser": "Welcome, %1",
-    "subtitle": "Sign in to start your session",
+    "subtitle": "Sign in to start your Caelestia session",
     "username": "Username",
     "password": "Password",
     "session": "Session",

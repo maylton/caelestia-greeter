@@ -9,7 +9,6 @@ import "../i18n"
 Singleton {
     id: root
 
-    property string username: ""
     property string prompt: I18n.t("login.password")
     property string errorMessage: ""
     property string statusMessage: ""
@@ -18,21 +17,17 @@ Singleton {
     property bool busy: false
     property bool awaitingResponse: false
     property bool echoResponse: false
-    property bool launchMarkerPending: false
+    property bool markerPending: false
 
-    readonly property string launchMarkerPath: {
-        const runtimeDir = Quickshell.env("XDG_RUNTIME_DIR") || "/tmp";
-        return runtimeDir + "/lumina-greeter-launch-requested";
-    }
-
+    readonly property string launchMarkerPath: `${Quickshell.env("XDG_RUNTIME_DIR") || "/tmp"}/caelestia-greeter-launch-requested`
     readonly property bool previewMode: {
-        const forced = Quickshell.env("LUMINA_GREETER_PREVIEW") || "";
-        return forced === "1" || forced.toLowerCase() === "true" || !Greetd.available;
+        const value = Quickshell.env("CAELESTIA_GREETER_PREVIEW") || "";
+        return value === "1" || value.toLowerCase() === "true" || !Greetd.available;
     }
 
     function authenticate(user, response, command) {
-        const normalizedUser = user.trim();
-        if (normalizedUser.length === 0) {
+        const username = user.trim();
+        if (!username) {
             root.errorMessage = I18n.t("auth.usernameRequired");
             return;
         }
@@ -41,7 +36,6 @@ Singleton {
             return;
         }
 
-        root.username = normalizedUser;
         root.pendingResponse = response;
         root.launchCommand = command;
         root.errorMessage = "";
@@ -54,7 +48,7 @@ Singleton {
             return;
         }
 
-        Greetd.createSession(root.username);
+        Greetd.createSession(username);
     }
 
     function provideResponse(response) {
@@ -70,42 +64,38 @@ Singleton {
 
     function cancel() {
         root.pendingResponse = "";
+        root.launchCommand = [];
         root.busy = false;
         root.awaitingResponse = false;
-        root.launchMarkerPending = false;
+        root.markerPending = false;
         root.statusMessage = "";
         root.errorMessage = "";
 
         if (launchMarkerProcess.running)
             launchMarkerProcess.running = false;
-
-        if (!root.previewMode && Greetd.user.length > 0)
+        if (!root.previewMode && Greetd.user)
             Greetd.cancelSession();
     }
 
     function requestSessionLaunch() {
-        if (root.launchCommand.length === 0) {
+        if (!root.launchCommand.length) {
             root.busy = false;
             root.errorMessage = I18n.t("auth.missingCommand");
             return;
         }
 
-        root.launchMarkerPending = true;
-        launchMarkerProcess.exec([
-            "/usr/bin/touch",
-            root.launchMarkerPath
-        ]);
+        root.markerPending = true;
+        launchMarkerProcess.exec(["/usr/bin/touch", root.launchMarkerPath]);
     }
 
     Process {
         id: launchMarkerProcess
 
-        onExited: (exitCode, exitStatus) => {
-            if (!root.launchMarkerPending)
+        onExited: exitCode => {
+            if (!root.markerPending)
                 return;
 
-            root.launchMarkerPending = false;
-
+            root.markerPending = false;
             if (exitCode !== 0) {
                 root.busy = false;
                 root.statusMessage = "";
@@ -119,8 +109,8 @@ Singleton {
 
     Timer {
         id: previewTimer
+
         interval: 650
-        repeat: false
         onTriggered: {
             root.busy = false;
             root.statusMessage = I18n.t("auth.previewSuccess");
@@ -131,9 +121,7 @@ Singleton {
         target: Greetd
 
         function onAuthMessage(message, error, responseRequired, echoResponse) {
-            root.prompt = message && message.length > 0
-                ? message
-                : I18n.t("login.password");
+            root.prompt = message || I18n.t("login.password");
             root.echoResponse = echoResponse;
 
             if (error) {
@@ -142,11 +130,10 @@ Singleton {
                 root.busy = false;
                 return;
             }
-
             if (!responseRequired)
                 return;
 
-            if (root.pendingResponse.length > 0) {
+            if (root.pendingResponse) {
                 const response = root.pendingResponse;
                 root.pendingResponse = "";
                 Greetd.respond(response);
@@ -160,13 +147,12 @@ Singleton {
 
         function onAuthFailure(message) {
             root.pendingResponse = "";
+            root.launchCommand = [];
             root.busy = false;
             root.awaitingResponse = false;
-            root.launchMarkerPending = false;
+            root.markerPending = false;
             root.statusMessage = "";
-            root.errorMessage = message && message.length > 0
-                ? message
-                : I18n.t("auth.failed");
+            root.errorMessage = message || I18n.t("auth.failed");
         }
 
         function onReadyToLaunch() {
@@ -177,7 +163,7 @@ Singleton {
         function onError(error) {
             root.busy = false;
             root.awaitingResponse = false;
-            root.launchMarkerPending = false;
+            root.markerPending = false;
             root.statusMessage = "";
             root.errorMessage = error;
         }
