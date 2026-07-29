@@ -299,16 +299,16 @@ PanelWindow {
                 top: parent.top
                 margins: 24
             }
-            width: Math.min(590, scene.width - 48)
-            spacing: 10
+            width: Math.min(480, scene.width - 48)
+            spacing: 8
             visible: window.interactiveScreen
             enabled: !window.loginOpen && !AuthService.launching
             opacity: scene.effectProgress
                 * (1 - window.loginEffects)
                 * (1 - window.exitEffects)
-            scale: 0.80 + scene.spatialProgress * 0.20
+            scale: 0.84 + scene.spatialProgress * 0.16
             transform: Translate {
-                x: (1 - scene.spatialProgress) * -42
+                x: (1 - scene.spatialProgress) * -36
             }
 
             SelectionMenu {
