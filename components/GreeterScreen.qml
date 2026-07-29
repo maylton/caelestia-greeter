@@ -47,10 +47,8 @@ PanelWindow {
             result.push({
                 "name": String(session.name || I18n.t("login.session")),
                 "command": Array.isArray(session.command) ? session.command : [],
-                "type": session.type === "x11" ? "x11" : "wayland",
-                "detail": session.type === "x11"
-                    ? I18n.t("session.x11")
-                    : I18n.t("session.wayland"),
+                "type": "wayland",
+                "detail": I18n.t("session.wayland"),
                 "desktopFile": String(session.desktopFile || "")
             });
         }
@@ -293,7 +291,7 @@ PanelWindow {
             transformOrigin: Item.Center
         }
 
-        Column {
+        Row {
             id: selectors
 
             anchors {
@@ -301,6 +299,7 @@ PanelWindow {
                 top: parent.top
                 margins: 24
             }
+            width: Math.min(590, scene.width - 48)
             spacing: 10
             visible: window.interactiveScreen
             enabled: !window.loginOpen && !AuthService.launching
@@ -313,6 +312,7 @@ PanelWindow {
             }
 
             SelectionMenu {
+                width: (selectors.width - selectors.spacing) / 2
                 label: I18n.t("login.user")
                 options: window.userChoices
                 selectedIndex: window.selectedUserIndex
@@ -332,6 +332,7 @@ PanelWindow {
             }
 
             SelectionMenu {
+                width: (selectors.width - selectors.spacing) / 2
                 label: I18n.t("login.session")
                 options: window.sessionChoices
                 selectedIndex: window.selectedSessionIndex
