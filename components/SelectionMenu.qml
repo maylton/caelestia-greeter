@@ -11,7 +11,7 @@ Rectangle {
     property string detailRole: "detail"
     property bool open: false
     property bool interactive: true
-    property int maximumListHeight: 248
+    property int maximumListHeight: 216
 
     signal toggleRequested()
     signal selected(int index)
@@ -29,10 +29,10 @@ Rectangle {
         return String(option[role]);
     }
 
-    implicitWidth: 286
+    implicitWidth: 230
     implicitHeight: header.height + listHeight
     height: implicitHeight
-    radius: 22
+    radius: 18
     color: Theme.colorSurface
     border.width: 1
     border.color: open ? Theme.colorPrimary : Theme.colorOutline
@@ -58,7 +58,7 @@ Rectangle {
             id: header
 
             width: parent.width
-            height: 66
+            height: 54
             radius: root.radius
             color: headerMouse.pressed
                 ? Theme.colorSurfacePressed
@@ -75,10 +75,10 @@ Rectangle {
                     left: parent.left
                     right: chevron.left
                     verticalCenter: parent.verticalCenter
-                    leftMargin: 18
-                    rightMargin: 12
+                    leftMargin: 14
+                    rightMargin: 10
                 }
-                spacing: 2
+                spacing: 1
 
                 Text {
                     width: parent.width
@@ -86,7 +86,7 @@ Rectangle {
                     color: Theme.colorTextMuted
                     elide: Text.ElideRight
                     font.family: Theme.fontBody
-                    font.pixelSize: 11
+                    font.pixelSize: 10
                     font.weight: Font.DemiBold
                 }
 
@@ -96,7 +96,7 @@ Rectangle {
                     color: Theme.colorText
                     elide: Text.ElideRight
                     font.family: Theme.fontBody
-                    font.pixelSize: 14
+                    font.pixelSize: 13
                     font.weight: Font.DemiBold
                 }
 
@@ -107,7 +107,7 @@ Rectangle {
                     color: Theme.colorTextMuted
                     elide: Text.ElideRight
                     font.family: Theme.fontBody
-                    font.pixelSize: 11
+                    font.pixelSize: 10
                 }
             }
 
@@ -116,14 +116,14 @@ Rectangle {
 
                 anchors {
                     right: parent.right
-                    rightMargin: 18
+                    rightMargin: 14
                     verticalCenter: parent.verticalCenter
                 }
                 text: "⌄"
                 color: Theme.colorText
                 rotation: root.open ? 180 : 0
                 font.family: Theme.fontBody
-                font.pixelSize: 20
+                font.pixelSize: 17
                 font.weight: Font.DemiBold
 
                 Behavior on rotation {
@@ -171,7 +171,7 @@ Rectangle {
                             required property var modelData
 
                             width: optionsColumn.width
-                            height: 54
+                            height: 46
                             color: index === root.selectedIndex
                                 ? Theme.colorPrimaryContainer
                                 : optionMouse.pressed
@@ -189,10 +189,10 @@ Rectangle {
                                     left: parent.left
                                     right: selectedMark.left
                                     verticalCenter: parent.verticalCenter
-                                    leftMargin: 18
-                                    rightMargin: 10
+                                    leftMargin: 14
+                                    rightMargin: 8
                                 }
-                                spacing: 2
+                                spacing: 1
 
                                 Text {
                                     width: parent.width
@@ -202,7 +202,7 @@ Rectangle {
                                         : Theme.colorText
                                     elide: Text.ElideRight
                                     font.family: Theme.fontBody
-                                    font.pixelSize: 13
+                                    font.pixelSize: 12
                                     font.weight: Font.DemiBold
                                 }
 
@@ -216,7 +216,7 @@ Rectangle {
                                     opacity: 0.78
                                     elide: Text.ElideRight
                                     font.family: Theme.fontBody
-                                    font.pixelSize: 11
+                                    font.pixelSize: 10
                                 }
                             }
 
@@ -225,14 +225,14 @@ Rectangle {
 
                                 anchors {
                                     right: parent.right
-                                    rightMargin: 18
+                                    rightMargin: 14
                                     verticalCenter: parent.verticalCenter
                                 }
                                 visible: optionRow.index === root.selectedIndex
                                 text: "✓"
                                 color: Theme.colorPrimaryContainerText
                                 font.family: Theme.fontBody
-                                font.pixelSize: 15
+                                font.pixelSize: 14
                                 font.weight: Font.Bold
                             }
 
