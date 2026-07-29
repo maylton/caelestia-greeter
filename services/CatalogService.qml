@@ -145,18 +145,13 @@ def valid_executable(command, try_exec):
 
 def discover_sessions():
     directories = [
-        (Path("/usr/local/share/wayland-sessions"), "wayland"),
-        (Path("/usr/share/wayland-sessions"), "wayland"),
+        Path("/usr/local/share/wayland-sessions"),
+        Path("/usr/share/wayland-sessions"),
     ]
-    if bool_value(os.environ.get("CAELESTIA_GREETER_INCLUDE_X11")):
-        directories += [
-            (Path("/usr/local/share/xsessions"), "x11"),
-            (Path("/usr/share/xsessions"), "x11"),
-        ]
 
     result = []
     seen = set()
-    for directory, session_type in directories:
+    for directory in directories:
         if not directory.is_dir():
             continue
         for desktop_file in sorted(directory.glob("*.desktop")):
@@ -185,7 +180,7 @@ def discover_sessions():
             result.append({
                 "name": name,
                 "command": command,
-                "type": session_type,
+                "type": "wayland",
                 "desktopFile": str(desktop_file),
             })
 
@@ -227,7 +222,7 @@ print(json.dumps({"users": discover_users(), "sessions": discover_sessions()}, e
         return items.filter(item => item && item.name && Array.isArray(item.command) && item.command.length > 0).map(item => ({
             "name": String(item.name),
             "command": item.command.map(part => String(part)),
-            "type": item.type === "x11" ? "x11" : "wayland",
+            "type": "wayland",
             "desktopFile": String(item.desktopFile || "")
         }));
     }
@@ -246,7 +241,7 @@ print(json.dumps({"users": discover_users(), "sessions": discover_sessions()}, e
             result.push({
                 "name": String(item.name),
                 "command": command,
-                "type": item.type === "x11" ? "x11" : "wayland",
+                "type": "wayland",
                 "desktopFile": String(item.desktopFile || "")
             });
         };
