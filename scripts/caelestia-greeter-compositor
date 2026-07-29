@@ -32,8 +32,50 @@ export XDG_CURRENT_DESKTOP=Hyprland
 export XDG_SESSION_DESKTOP=Hyprland
 export XDG_SESSION_TYPE=wayland
 
+hyprland_config="${CAELESTIA_GREETER_HYPRLAND_CONFIG:-$XDG_CACHE_HOME/caelestia-greeter-hyprland.lua}"
+config_tmp="${hyprland_config}.tmp.$$"
+
+cat > "$config_tmp" <<'LUA'
+hl.monitor({
+    output = "",
+    mode = "preferred",
+    position = "auto",
+    scale = 1,
+})
+
+hl.config({
+    input = {
+        kb_layout = "br",
+    },
+    misc = {
+        disable_hyprland_logo = true,
+        disable_splash_rendering = true,
+        force_default_wallpaper = 0,
+    },
+    animations = {
+        enabled = false,
+    },
+    decoration = {
+        rounding = 0,
+        blur = {
+            enabled = false,
+        },
+        shadow = {
+            enabled = false,
+        },
+    },
+})
+
+hl.on("hyprland.start", function()
+    hl.exec_cmd("/usr/local/bin/caelestia-greeter-run")
+end)
+LUA
+
+chmod 0600 "$config_tmp"
+mv -f "$config_tmp" "$hyprland_config"
+
 if command -v start-hyprland >/dev/null 2>&1; then
-    exec start-hyprland -- -c /etc/greetd/caelestia-greeter-hyprland.conf
+    exec start-hyprland -- -c "$hyprland_config"
 fi
 
-exec /usr/bin/Hyprland --config /etc/greetd/caelestia-greeter-hyprland.conf
+exec /usr/bin/Hyprland --config "$hyprland_config"
