@@ -69,12 +69,6 @@ Wayland sessions are discovered from:
 
 Configured sessions from `config/defaults.json` are shown first, so the Caelestia session remains the default. Duplicate commands are removed automatically.
 
-X11 desktop entries are not shown by default because launching them safely through greetd may require an X server wrapper. They can be exposed for testing with:
-
-```bash
-CAELESTIA_GREETER_INCLUDE_X11=1
-```
-
 The **Other user** option keeps manual username entry available for accounts that are intentionally hidden from the catalogue.
 
 ## Installation
