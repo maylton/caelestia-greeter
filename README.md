@@ -8,8 +8,10 @@ A Material Expressive login screen for Caelestia Shell, built with QML, Quickshe
 - Clock, date, motion and password glyphs matching the Caelestia lock screen.
 - Dynamic Google Sans Flex loading from the installed Caelestia Shell.
 - Brazilian Portuguese and English.
-- Automatic user, display-name and avatar detection.
-- greetd authentication and Hyprland session launch.
+- Automatic local-user, display-name and avatar discovery.
+- Automatic discovery and selection of installed Wayland sessions.
+- Manual username entry through the **Other user** option.
+- greetd authentication and session launch.
 - Multi-monitor rendering and local preview mode.
 - Restart and power-off actions.
 - Interactive installer with display-manager backup and recovery.
@@ -21,6 +23,7 @@ A Material Expressive login screen for Caelestia Shell, built with QML, Quickshe
 - Quickshell 0.3 or newer
 - greetd
 - systemd
+- Python 3, used by the runtime user and session catalogue
 - `M3Shapes`, provided by Caelestia Shell; simple circular password glyphs are used as a fallback
 
 The installer is intended for systemd-based Caelestia/Hyprland systems and has been validated on CachyOS.
@@ -51,6 +54,23 @@ CAELESTIA_GREETER_WALLPAPER=/path/to/wallpaper.jpg ./scripts/run-preview.sh
 CAELESTIA_GREETER_SCHEME_PATH=/path/to/scheme.json ./scripts/run-preview.sh
 ```
 
+## User and session selection
+
+The greeter discovers regular local accounts using the system UID range from `/etc/login.defs`. System accounts, `root`, `nobody`, the restricted greetd account and users with `nologin` or `false` shells are ignored.
+
+Display names and avatars are read from AccountsService when available. The user's `.face.icon` and `.face` files are also considered when they are readable by the greeter account. When no avatar is accessible, the interface displays the user's initial.
+
+Wayland sessions are discovered from:
+
+```text
+/usr/local/share/wayland-sessions
+/usr/share/wayland-sessions
+```
+
+Configured sessions from `config/defaults.json` are shown first, so the Caelestia session remains the default. Duplicate commands are removed automatically.
+
+The **Other user** option keeps manual username entry available for accounts that are intentionally hidden from the catalogue.
+
 ## Installation
 
 Run the interactive installer from the repository root:
@@ -74,7 +94,7 @@ Before changing the system, the installer displays the complete plan and waits f
 4. backs up the current display manager, its service state and any existing Caelestia Greeter installation;
 5. installs the QML interface, session scripts, Hyprland greeter configuration and greetd configuration;
 6. copies the user's avatar, wallpaper, Material palette, Shell configuration and Google Sans Flex file into `/var/cache/caelestia-greeter` for the restricted `greeter` account;
-7. configures GNOME Keyring PAM integration when `pam_gnome_keyring.so` is available;
+7. configures GNOME Keyring PAM integration when the module is available;
 8. disables the previous display manager and enables greetd for the next boot;
 9. installs the `caelestia-greeter-restore` recovery command.
 
@@ -125,24 +145,25 @@ Defaults live in `config/defaults.json`:
   "displayName": "",
   "avatar": "",
   "language": "system",
-  "loginStartsOpen": true,
+  "loginStartsOpen": false,
   "wallpaper": "caelestia",
   "sessions": [
     {
       "name": "Caelestia",
-      "command": ["/usr/local/bin/caelestia-session"]
+      "command": ["/usr/local/bin/caelestia-session"],
+      "type": "wayland"
     }
   ]
 }
 ```
 
-Use `"wallpaper": "caelestia"` to follow the active Caelestia wallpaper.
+Use `"wallpaper": "caelestia"` to follow the active Caelestia wallpaper. Set `"loginStartsOpen": true` to skip the initial user/session selection view and open the password surface immediately; pressing Escape returns to the selector view.
 
 ## Runtime data
 
 The profile synchroniser creates root-owned, greeter-readable copies of the selected user's visual state. It writes cached assets to `/var/cache/caelestia-greeter` and the resolved environment to `/run/caelestia-greeter/profile.env`.
 
-The user's original wallpaper, avatar, Shell configuration and palette are never modified.
+The runtime catalogue reads account and session metadata only. The user's original wallpaper, avatar, Shell configuration and palette are never modified.
 
 ## Structure
 
@@ -150,7 +171,7 @@ The user's original wallpaper, avatar, Shell configuration and palette are never
 - `config/`: defaults and environment overrides.
 - `design/`: dynamic theme and motion tokens.
 - `i18n/`: translation catalogues.
-- `services/`: authentication and power actions.
+- `services/`: authentication, catalogue and power actions.
 - `packaging/`: greetd, Hyprland and systemd configuration.
 - `scripts/`: preview, synchronisation, session and recovery commands.
 - `install.sh`: interactive system installer.

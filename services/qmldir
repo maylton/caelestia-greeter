@@ -1,2 +1,3 @@
 singleton AuthService 1.0 AuthService.qml
+singleton CatalogService 1.0 CatalogService.qml
 singleton PowerService 1.0 PowerService.qml

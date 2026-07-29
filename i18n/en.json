@@ -17,12 +17,17 @@
     "welcome": "Welcome to Caelestia",
     "welcomeUser": "Welcome, %1",
     "subtitle": "Sign in to start your Caelestia session",
+    "user": "User",
+    "otherUser": "Other user",
     "username": "Username",
     "password": "Enter your password",
     "session": "Session",
     "back": "Back",
     "signIn": "Sign in",
     "signingIn": "Signing in…"
+  },
+  "session": {
+    "wayland": "Wayland session"
   },
   "auth": {
     "usernameRequired": "Enter your username.",

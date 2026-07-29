@@ -3,12 +3,13 @@
   "displayName": "",
   "avatar": "",
   "language": "system",
-  "loginStartsOpen": true,
+  "loginStartsOpen": false,
   "wallpaper": "caelestia",
   "sessions": [
     {
       "name": "Caelestia",
-      "command": ["/usr/local/bin/caelestia-session"]
+      "command": ["/usr/local/bin/caelestia-session"],
+      "type": "wayland"
     }
   ]
 }

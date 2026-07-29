@@ -16,6 +16,111 @@ PanelWindow {
     property real loginEffects: loginOpen ? 1 : 0
     property real exitSpatial: AuthService.launching ? 1 : 0
     property real exitEffects: AuthService.launching ? 1 : 0
+    property int selectedUserIndex: 0
+    property int selectedSessionIndex: 0
+    property string openSelector: ""
+
+    readonly property var userChoices: {
+        const result = [];
+        const users = Array.isArray(CatalogService.users) ? CatalogService.users : [];
+        for (const user of users) {
+            result.push({
+                "username": String(user.username || ""),
+                "displayName": String(user.displayName || user.username || ""),
+                "avatar": String(user.avatar || ""),
+                "manual": false
+            });
+        }
+        result.push({
+            "username": "",
+            "displayName": I18n.t("login.otherUser"),
+            "avatar": "",
+            "manual": true
+        });
+        return result;
+    }
+
+    readonly property var sessionChoices: {
+        const result = [];
+        const sessions = Array.isArray(CatalogService.sessions) ? CatalogService.sessions : [];
+        for (const session of sessions) {
+            result.push({
+                "name": String(session.name || I18n.t("login.session")),
+                "command": Array.isArray(session.command) ? session.command : [],
+                "type": "wayland",
+                "detail": I18n.t("session.wayland"),
+                "desktopFile": String(session.desktopFile || "")
+            });
+        }
+        return result;
+    }
+
+    readonly property var selectedUser: userChoices.length > 0
+        ? userChoices[Math.max(0, Math.min(selectedUserIndex, userChoices.length - 1))]
+        : null
+    readonly property var selectedSession: sessionChoices.length > 0
+        ? sessionChoices[Math.max(0, Math.min(selectedSessionIndex, sessionChoices.length - 1))]
+        : null
+    readonly property bool manualUserSelected: selectedUser && selectedUser.manual === true
+
+    function commandKey(session) {
+        return session && Array.isArray(session.command)
+            ? JSON.stringify(session.command)
+            : "";
+    }
+
+    function alignUserSelection() {
+        if (userChoices.length === 0) {
+            selectedUserIndex = 0;
+            return;
+        }
+
+        if (selectedUser && selectedUser.manual) {
+            selectedUserIndex = userChoices.length - 1;
+            return;
+        }
+
+        const currentUsername = selectedUser ? selectedUser.username : "";
+        const preferredUsername = currentUsername || Config.defaultUser;
+        let index = preferredUsername
+            ? userChoices.findIndex(user => !user.manual && user.username === preferredUsername)
+            : -1;
+        if (index < 0)
+            index = userChoices.length > 1 ? 0 : userChoices.length - 1;
+        selectedUserIndex = index;
+    }
+
+    function alignSessionSelection() {
+        if (sessionChoices.length === 0) {
+            selectedSessionIndex = 0;
+            return;
+        }
+
+        const currentKey = commandKey(selectedSession);
+        let index = currentKey
+            ? sessionChoices.findIndex(session => commandKey(session) === currentKey)
+            : -1;
+        if (index < 0)
+            index = 0;
+        selectedSessionIndex = index;
+    }
+
+    Component.onCompleted: {
+        alignUserSelection();
+        alignSessionSelection();
+    }
+
+    Connections {
+        target: CatalogService
+
+        function onUsersChanged() {
+            window.alignUserSelection();
+        }
+
+        function onSessionsChanged() {
+            window.alignSessionSelection();
+        }
+    }
 
     screen: modelData
     color: "transparent"
@@ -65,6 +170,12 @@ PanelWindow {
             if (!window.interactiveScreen || AuthService.launching)
                 return;
 
+            if (event.key === Qt.Key_Escape && window.openSelector) {
+                window.openSelector = "";
+                event.accepted = true;
+                return;
+            }
+
             if (event.key === Qt.Key_Escape && window.loginOpen) {
                 AuthService.cancel();
                 window.loginOpen = false;
@@ -73,6 +184,7 @@ PanelWindow {
             }
 
             if (!window.loginOpen) {
+                window.openSelector = "";
                 window.loginOpen = true;
                 event.accepted = true;
             }
@@ -149,7 +261,10 @@ PanelWindow {
                 && !window.loginOpen
                 && !AuthService.launching
             cursorShape: Qt.PointingHandCursor
-            onClicked: window.loginOpen = true
+            onClicked: {
+                window.openSelector = "";
+                window.loginOpen = true;
+            }
         }
 
         ExpressiveClock {
@@ -174,6 +289,67 @@ PanelWindow {
             rotation: -6 * (1 - scene.spatialProgress)
                 + window.exitSpatial * 4
             transformOrigin: Item.Center
+        }
+
+        Row {
+            id: selectors
+
+            anchors {
+                left: parent.left
+                top: parent.top
+                margins: 24
+            }
+            width: Math.min(480, scene.width - 48)
+            spacing: 8
+            visible: window.interactiveScreen
+            enabled: !window.loginOpen && !AuthService.launching
+            opacity: scene.effectProgress
+                * (1 - window.loginEffects)
+                * (1 - window.exitEffects)
+            scale: 0.84 + scene.spatialProgress * 0.16
+            transform: Translate {
+                x: (1 - scene.spatialProgress) * -36
+            }
+
+            SelectionMenu {
+                width: (selectors.width - selectors.spacing) / 2
+                label: I18n.t("login.user")
+                options: window.userChoices
+                selectedIndex: window.selectedUserIndex
+                nameRole: "displayName"
+                detailRole: "username"
+                open: window.openSelector === "user"
+                interactive: selectors.enabled
+
+                onToggleRequested: {
+                    window.openSelector = window.openSelector === "user" ? "" : "user";
+                }
+
+                onSelected: index => {
+                    window.selectedUserIndex = index;
+                    window.openSelector = "";
+                }
+            }
+
+            SelectionMenu {
+                width: (selectors.width - selectors.spacing) / 2
+                label: I18n.t("login.session")
+                options: window.sessionChoices
+                selectedIndex: window.selectedSessionIndex
+                nameRole: "name"
+                detailRole: "detail"
+                open: window.openSelector === "session"
+                interactive: selectors.enabled
+
+                onToggleRequested: {
+                    window.openSelector = window.openSelector === "session" ? "" : "session";
+                }
+
+                onSelected: index => {
+                    window.selectedSessionIndex = index;
+                    window.openSelector = "";
+                }
+            }
         }
 
         LoginSurface {
@@ -206,10 +382,18 @@ PanelWindow {
                 * (1 - window.exitSpatial)
             enabled: window.loginOpen && !AuthService.launching
             active: window.loginOpen
-            defaultUser: Config.defaultUser
-            displayName: Config.displayName
-            avatarSource: Config.avatarSource
-            sessions: Config.sessions
+            defaultUser: window.manualUserSelected || !window.selectedUser
+                ? ""
+                : window.selectedUser.username
+            displayName: window.manualUserSelected || !window.selectedUser
+                ? ""
+                : window.selectedUser.displayName
+            avatarSource: window.manualUserSelected || !window.selectedUser
+                ? ""
+                : window.selectedUser.avatar
+            sessions: window.selectedSession
+                ? [window.selectedSession]
+                : CatalogService.sessions
 
             onCloseRequested: {
                 AuthService.cancel();
