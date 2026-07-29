@@ -27,8 +27,7 @@
     "signingIn": "Signing in…"
   },
   "session": {
-    "wayland": "Wayland session",
-    "x11": "X11 session"
+    "wayland": "Wayland session"
   },
   "auth": {
     "usernameRequired": "Enter your username.",
