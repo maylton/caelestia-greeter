@@ -2,13 +2,14 @@
 set -Eeuo pipefail
 IFS=$'\n\t'
 
-VERSION="1.0.0"
+VERSION="1.1.0"
 PROJECT_NAME="Caelestia Greeter"
 INSTALL_DIR="/etc/xdg/quickshell/caelestia-greeter"
 BACKUP_BASE="/var/backups/caelestia-greeter"
 CACHE_DIR="/var/cache/caelestia-greeter"
 RUNTIME_DIR="/run/caelestia-greeter"
 SYSTEMD_DROPIN_DIR="/etc/systemd/system/greetd.service.d"
+LEGACY_HYPRLAND_CONF="/etc/greetd/caelestia-greeter-hyprland.conf"
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 ASSUME_YES=0
@@ -66,11 +67,7 @@ done
 
 if [[ -z "$LANGUAGE" ]]; then
     locale_value="${LC_ALL:-${LC_MESSAGES:-${LANG:-en}}}"
-    if [[ "${locale_value,,}" == pt* ]]; then
-        LANGUAGE="pt-BR"
-    else
-        LANGUAGE="en"
-    fi
+    [[ "${locale_value,,}" == pt* ]] && LANGUAGE="pt-BR" || LANGUAGE="en"
 fi
 
 if [[ "$LANGUAGE" != "pt-BR" && "$LANGUAGE" != "en" ]]; then
@@ -90,7 +87,8 @@ if [[ "$LANGUAGE" == "pt-BR" ]]; then
     T_TARGET_USER="Perfil do Caelestia usado"
     T_BACKUP_EXPLAIN="Será criado um backup dos arquivos e do estado do gerenciador atual"
     T_DISABLE_EXPLAIN="O gerenciador atual será desativado para o próximo boot; ele NÃO será interrompido nesta sessão"
-    T_INSTALL_EXPLAIN="Os arquivos QML, scripts, configuração do Hyprland e configuração do greetd serão instalados"
+    T_INSTALL_EXPLAIN="Os arquivos QML, scripts, wrapper Lua do Hyprland e configuração do greetd serão instalados"
+    T_CLEANUP_EXPLAIN="A configuração Hyprlang legada será removida depois de ser incluída no backup"
     T_CACHE_EXPLAIN="Avatar, wallpaper, paleta, configuração do Shell e fonte serão copiados para um cache legível pelo usuário restrito do greetd"
     T_PAM_EXPLAIN="A integração PAM do GNOME Keyring será configurada quando o módulo estiver disponível"
     T_ENABLE_EXPLAIN="O greetd será habilitado como gerenciador de login padrão para o próximo boot"
@@ -99,6 +97,7 @@ if [[ "$LANGUAGE" == "pt-BR" ]]; then
     T_CANCEL="Instalação cancelada. Nenhuma alteração foi realizada."
     T_BACKUP="Criando backup do gerenciador atual e da instalação existente"
     T_INSTALL_FILES="Instalando os arquivos do Caelestia Greeter"
+    T_VERIFY="Verificando a instalação e a configuração Lua"
     T_PAM="Configurando autenticação e GNOME Keyring"
     T_SYNC="Sincronizando perfil, wallpaper, paleta e fonte"
     T_SWITCH="Configurando a troca de gerenciador de login"
@@ -110,6 +109,7 @@ if [[ "$LANGUAGE" == "pt-BR" ]]; then
     T_WARN_M3="O módulo M3Shapes não foi encontrado. Os glyphs da senha usarão círculos simples."
     T_WARN_CONFIG="A configuração do Caelestia Shell não foi encontrada; serão usados os valores padrão disponíveis."
     T_MISSING="Dependência obrigatória ausente"
+    T_LUA_OK="Wrapper Lua do Hyprland validado"
 else
     T_TITLE="Caelestia Greeter installer"
     T_ROOT="Administrative privileges are required. Requesting sudo..."
@@ -122,7 +122,8 @@ else
     T_TARGET_USER="Caelestia profile used"
     T_BACKUP_EXPLAIN="A backup of the current manager's files and service state will be created"
     T_DISABLE_EXPLAIN="The current manager will be disabled for the next boot; it will NOT be stopped in this session"
-    T_INSTALL_EXPLAIN="The QML files, scripts, Hyprland configuration and greetd configuration will be installed"
+    T_INSTALL_EXPLAIN="The QML files, scripts, Hyprland Lua wrapper and greetd configuration will be installed"
+    T_CLEANUP_EXPLAIN="The legacy Hyprlang configuration will be removed after it is included in the backup"
     T_CACHE_EXPLAIN="Avatar, wallpaper, palette, Shell configuration and font will be copied to a cache readable by greetd's restricted user"
     T_PAM_EXPLAIN="GNOME Keyring PAM integration will be configured when the module is available"
     T_ENABLE_EXPLAIN="greetd will be enabled as the default login manager for the next boot"
@@ -131,6 +132,7 @@ else
     T_CANCEL="Installation cancelled. No changes were made."
     T_BACKUP="Backing up the current login manager and existing installation"
     T_INSTALL_FILES="Installing Caelestia Greeter files"
+    T_VERIFY="Verifying the installation and Lua configuration"
     T_PAM="Configuring authentication and GNOME Keyring"
     T_SYNC="Synchronizing the profile, wallpaper, palette and font"
     T_SWITCH="Configuring the login-manager switch"
@@ -142,6 +144,7 @@ else
     T_WARN_M3="The M3Shapes module was not found. Password glyphs will use simple circles."
     T_WARN_CONFIG="The Caelestia Shell configuration was not found; available defaults will be used."
     T_MISSING="Required dependency is missing"
+    T_LUA_OK="Hyprland Lua wrapper validated"
 fi
 
 bold() { printf '\033[1m%s\033[0m' "$*"; }
@@ -171,6 +174,10 @@ fi
 
 require_command() {
     command -v "$1" >/dev/null 2>&1 || die "$T_MISSING: $1"
+}
+
+path_exists() {
+    [[ -e "$1" || -L "$1" ]]
 }
 
 is_regular_user() {
@@ -235,10 +242,6 @@ dm_label() {
     esac
 }
 
-path_exists() {
-    [[ -e "$1" || -L "$1" ]]
-}
-
 backup_path() {
     local path="$1" relative destination
     path_exists "$path" || return 0
@@ -257,7 +260,9 @@ backup_sddm_theme() {
     local files=()
     path_exists /etc/sddm.conf && files+=(/etc/sddm.conf)
     if [[ -d /etc/sddm.conf.d ]]; then
-        while IFS= read -r -d '' file; do files+=("$file"); done < <(find /etc/sddm.conf.d -maxdepth 1 -type f -name '*.conf' -print0 2>/dev/null)
+        while IFS= read -r -d '' file; do
+            files+=("$file")
+        done < <(find /etc/sddm.conf.d -maxdepth 1 -type f -name '*.conf' -print0 2>/dev/null)
     fi
     if ((${#files[@]})); then
         theme="$(awk -F= '/^[[:space:]]*Current[[:space:]]*=/{gsub(/[[:space:]]/, "", $2); value=$2} END{print value}' "${files[@]}" 2>/dev/null || true)"
@@ -283,7 +288,9 @@ collect_backup() {
         /var/lib/caelestia-greeter-install.env
     )
     local path
-    for path in "${generic_paths[@]}"; do backup_path "$path"; done
+    for path in "${generic_paths[@]}"; do
+        backup_path "$path"
+    done
 
     case "$CURRENT_DM_SERVICE" in
         sddm.service)
@@ -326,6 +333,20 @@ find_google_sans_flex() {
     done
 }
 
+validate_lua_wrapper() {
+    local wrapper="$1"
+    [[ -r "$wrapper" ]] || die "Missing Hyprland compositor wrapper: $wrapper"
+    grep -Fq 'caelestia-greeter-hyprland.lua' "$wrapper" \
+        || die "Hyprland compositor wrapper does not generate a Lua configuration."
+    grep -Fq 'hl.config({' "$wrapper" \
+        || die "Hyprland compositor wrapper does not contain hl.config."
+    grep -Fq 'hl.on("hyprland.start"' "$wrapper" \
+        || die "Hyprland compositor wrapper does not start the greeter through the Lua event API."
+    if grep -Fq 'caelestia-greeter-hyprland.conf' "$wrapper"; then
+        die "Hyprland compositor wrapper still references the deprecated .conf configuration."
+    fi
+}
+
 validate_project_files() {
     local required=(
         assets components config design i18n services shell.qml
@@ -335,7 +356,6 @@ validate_project_files() {
         scripts/caelestia-greeter-profile-sync
         scripts/caelestia-greeter-restore
         scripts/caelestia-session
-        packaging/greetd/caelestia-greeter-hyprland.conf
         packaging/greetd/config.toml
         packaging/systemd/greetd-caelestia-greeter.conf
     )
@@ -343,11 +363,19 @@ validate_project_files() {
     for entry in "${required[@]}"; do
         path_exists "$SCRIPT_DIR/$entry" || die "Missing project file: $entry"
     done
+
+    validate_lua_wrapper "$SCRIPT_DIR/scripts/caelestia-greeter-compositor"
+    grep -Fq 'command = "/usr/local/bin/caelestia-greeter-compositor"' \
+        "$SCRIPT_DIR/packaging/greetd/config.toml" \
+        || die "greetd config does not launch caelestia-greeter-compositor."
 }
 
 configure_pam_keyring() {
-    local pam_file=/etc/pam.d/greetd module_found=0
-    for module in /usr/lib/security/pam_gnome_keyring.so /usr/lib64/security/pam_gnome_keyring.so /usr/lib/x86_64-linux-gnu/security/pam_gnome_keyring.so; do
+    local pam_file=/etc/pam.d/greetd module module_found=0
+    for module in \
+        /usr/lib/security/pam_gnome_keyring.so \
+        /usr/lib64/security/pam_gnome_keyring.so \
+        /usr/lib/x86_64-linux-gnu/security/pam_gnome_keyring.so; do
         [[ -e "$module" ]] && module_found=1 && break
     done
 
@@ -386,6 +414,7 @@ install_project() {
         "$SCRIPT_DIR/services" \
         "$SCRIPT_DIR/shell.qml" \
         "$staging/"
+
     chown -R root:root "$staging"
     find "$staging" -type d -exec chmod 0755 {} +
     find "$staging" -type f -exec chmod 0644 {} +
@@ -402,12 +431,36 @@ install_project() {
         install -Dm0755 "$SCRIPT_DIR/scripts/$script" "/usr/local/bin/$script"
     done
 
-    install -Dm0644 "$SCRIPT_DIR/packaging/greetd/caelestia-greeter-hyprland.conf" \
-        /etc/greetd/caelestia-greeter-hyprland.conf
     install -Dm0644 "$SCRIPT_DIR/packaging/greetd/config.toml" \
         /etc/greetd/config.toml
     install -Dm0644 "$SCRIPT_DIR/packaging/systemd/greetd-caelestia-greeter.conf" \
         "$SYSTEMD_DROPIN_DIR/caelestia-greeter.conf"
+
+    # The compositor now generates its Lua configuration in the greeter's
+    # writable runtime cache. Static Hyprlang configuration is obsolete.
+    rm -f -- "$LEGACY_HYPRLAND_CONF"
+}
+
+verify_installation() {
+    local script
+    for script in \
+        caelestia-greeter-session \
+        caelestia-greeter-run \
+        caelestia-greeter-compositor \
+        caelestia-greeter-profile-sync \
+        caelestia-greeter-restore \
+        caelestia-session; do
+        [[ -x "/usr/local/bin/$script" ]] || die "Installed script is missing or not executable: $script"
+    done
+
+    [[ -r /etc/greetd/config.toml ]] || die "Installed greetd config is missing."
+    grep -Fq 'command = "/usr/local/bin/caelestia-greeter-compositor"' /etc/greetd/config.toml \
+        || die "Installed greetd config does not launch the compositor wrapper."
+    [[ ! -e "$LEGACY_HYPRLAND_CONF" ]] \
+        || die "Legacy Hyprland .conf file is still installed."
+
+    validate_lua_wrapper /usr/local/bin/caelestia-greeter-compositor
+    info "$T_LUA_OK"
 }
 
 printf '\n'
@@ -416,13 +469,9 @@ printf '\n\n'
 
 CURRENT_STEP="$T_DETECT"
 info "$CURRENT_STEP"
-require_command systemctl
-require_command getent
-require_command install
-require_command find
-require_command awk
-require_command grep
-require_command qs
+for command in systemctl getent install find awk grep qs python3; do
+    require_command "$command"
+done
 if ! command -v Hyprland >/dev/null 2>&1 && ! command -v start-hyprland >/dev/null 2>&1; then
     die "$T_MISSING: Hyprland"
 fi
@@ -440,6 +489,7 @@ TARGET_HOME="${TARGET_HOME:-/home/$TARGET_USER}"
 CURRENT_STEP="$T_VALIDATE"
 info "$CURRENT_STEP"
 validate_project_files
+bash -n "$SCRIPT_DIR/install.sh"
 for script in "$SCRIPT_DIR"/scripts/*; do
     [[ -f "$script" ]] && bash -n "$script"
 done
@@ -460,10 +510,13 @@ printf '  2. %s: %s\n' "$T_TARGET_USER" "$TARGET_USER"
 printf '  3. %s.\n' "$T_BACKUP_EXPLAIN"
 printf '  4. %s.\n' "$T_DISABLE_EXPLAIN"
 printf '  5. %s.\n' "$T_INSTALL_EXPLAIN"
-printf '  6. %s.\n' "$T_CACHE_EXPLAIN"
-if ((CONFIGURE_KEYRING)); then printf '  7. %s.\n' "$T_PAM_EXPLAIN"; fi
-printf '  8. %s.\n' "$T_ENABLE_EXPLAIN"
-printf '  9. %s.\n' "$T_RESTORE_EXPLAIN"
+printf '  6. %s.\n' "$T_CLEANUP_EXPLAIN"
+printf '  7. %s.\n' "$T_CACHE_EXPLAIN"
+if ((CONFIGURE_KEYRING)); then
+    printf '  8. %s.\n' "$T_PAM_EXPLAIN"
+fi
+printf '  9. %s.\n' "$T_ENABLE_EXPLAIN"
+printf ' 10. %s.\n' "$T_RESTORE_EXPLAIN"
 printf '\n'
 
 if ((ASSUME_YES == 0)); then
@@ -476,11 +529,13 @@ fi
 
 STAMP="$(date +%Y%m%d-%H%M%S)"
 BACKUP_DIR="$BACKUP_BASE/$STAMP"
+
 CURRENT_STEP="$T_BACKUP"
 info "$CURRENT_STEP"
 install -d -m 0700 "$BACKUP_DIR/files"
 : > "$BACKUP_DIR/backed-up-paths.txt"
 collect_backup
+
 PREVIOUS_DM_ENABLED=""
 PREVIOUS_DM_ACTIVE=""
 if [[ -n "$CURRENT_DM_SERVICE" ]]; then
@@ -508,6 +563,10 @@ if ! getent passwd greeter >/dev/null 2>&1; then
 fi
 install_project
 
+CURRENT_STEP="$T_VERIFY"
+info "$CURRENT_STEP"
+verify_installation
+
 CURRENT_STEP="$T_PAM"
 info "$CURRENT_STEP"
 configure_pam_keyring
@@ -521,7 +580,8 @@ CURRENT_STEP="$T_SWITCH"
 info "$CURRENT_STEP"
 systemctl daemon-reload
 if [[ -n "$CURRENT_DM_SERVICE" && "$CURRENT_DM_SERVICE" != "greetd.service" ]]; then
-    systemctl disable "$CURRENT_DM_SERVICE" >/dev/null 2>&1 || warn "Could not disable $CURRENT_DM_SERVICE automatically."
+    systemctl disable "$CURRENT_DM_SERVICE" >/dev/null 2>&1 \
+        || warn "Could not disable $CURRENT_DM_SERVICE automatically."
 fi
 systemctl enable -f greetd.service
 
