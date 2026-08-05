@@ -320,7 +320,7 @@ Rectangle {
         }
 
         Row {
-            anchors.right: parent.right
+            anchors.horizontalCenter: parent.horizontalCenter
             spacing: 10
             opacity: root.actionsProgress
             scale: 0.78 + root.actionsProgress * 0.22
