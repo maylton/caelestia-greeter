@@ -209,11 +209,18 @@ print(json.dumps({"users": discover_users(), "sessions": discover_sessions()}, e
     function normaliseUsers(items) {
         if (!Array.isArray(items))
             return fallbackUsers();
-        return items.filter(item => item && item.username).map(item => ({
-            "username": String(item.username),
-            "displayName": String(item.displayName || item.username),
-            "avatar": sourceUrl(String(item.avatar || ""))
-        }));
+        return items.filter(item => item && item.username).map(item => {
+            const username = String(item.username);
+            const discoveredAvatar = sourceUrl(String(item.avatar || ""));
+            const avatar = username === Config.defaultUser && Config.avatarSource
+                ? Config.avatarSource
+                : discoveredAvatar;
+            return {
+                "username": username,
+                "displayName": String(item.displayName || username),
+                "avatar": avatar
+            };
+        });
     }
 
     function normaliseSessions(items) {
