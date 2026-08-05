@@ -1,5 +1,4 @@
 import QtQuick
-import Quickshell.Widgets
 import "../design"
 import "../i18n"
 import "../services"
@@ -166,62 +165,31 @@ Rectangle {
         }
         spacing: 18
 
-        Row {
+        Column {
             id: profileHeader
 
             width: parent.width
-            spacing: 16
+            spacing: 10
             opacity: root.headerProgress
-            scale: 0.74 + root.headerProgress * 0.26
+            scale: 0.68 + root.headerProgress * 0.32
+            transformOrigin: Item.Center
             transform: Translate {
                 y: (1 - root.headerProgress) * 42
             }
 
-            ClippingRectangle {
+            ExpressiveProfilePic {
                 id: avatarFrame
 
-                width: 64
-                height: 64
-                radius: 22
-                color: Theme.colorPrimaryContainer
-                border.width: 1
-                border.color: Theme.colorOutline
-                rotation: -180 * (1 - root.headerProgress)
-                scale: 0.34 + root.headerProgress * 0.66
-                transformOrigin: Item.Center
-
-                Image {
-                    id: avatarImage
-
-                    anchors.fill: parent
-                    source: root.avatarSource
-                    fillMode: Image.PreserveAspectCrop
-                    sourceSize.width: width
-                    sourceSize.height: height
-                    asynchronous: false
-                    cache: true
-                    visible: status === Image.Ready
-
-                    onStatusChanged: {
-                        if (status === Image.Error && root.avatarSource)
-                            console.warn("Caelestia Greeter: failed to load avatar:", root.avatarSource);
-                    }
-                }
-
-                Text {
-                    anchors.centerIn: parent
-                    visible: avatarImage.status !== Image.Ready
-                    text: root.profileLabel ? root.profileLabel.charAt(0).toUpperCase() : "C"
-                    color: Theme.colorPrimaryContainerText
-                    font.family: Theme.fontDisplay
-                    font.pixelSize: 26
-                    font.weight: Font.DemiBold
-                }
+                anchors.horizontalCenter: parent.horizontalCenter
+                centerWidth: Math.min(320, profileHeader.width)
+                avatarSource: root.avatarSource
+                fallbackText: root.profileLabel
+                    ? root.profileLabel.charAt(0).toUpperCase()
+                    : "C"
             }
 
             Column {
-                anchors.verticalCenter: parent.verticalCenter
-                width: parent.width - avatarFrame.width - parent.spacing
+                width: parent.width
                 spacing: 3
 
                 Text {
@@ -229,8 +197,9 @@ Rectangle {
                     text: root.welcomeLabel
                     color: Theme.colorText
                     elide: Text.ElideRight
+                    horizontalAlignment: Text.AlignHCenter
                     font.family: Theme.fontDisplay
-                    font.pixelSize: 22
+                    font.pixelSize: 20
                     font.weight: Font.DemiBold
                 }
 
@@ -242,6 +211,7 @@ Rectangle {
                             : I18n.t("login.subtitle"))
                     color: Theme.colorTextMuted
                     elide: Text.ElideRight
+                    horizontalAlignment: Text.AlignHCenter
                     font.family: Theme.fontBody
                     font.pixelSize: 13
                 }
@@ -251,7 +221,8 @@ Rectangle {
         GreeterTextField {
             id: usernameField
 
-            width: parent.width
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: Math.min(parent.width, 420)
             visible: !root.defaultUser
             revealProgress: root.fieldsProgress
             transform: Translate {
@@ -265,7 +236,8 @@ Rectangle {
         GreeterTextField {
             id: passwordField
 
-            width: parent.width
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: Math.min(parent.width, 390)
             revealProgress: root.fieldsProgress
             transform: Translate {
                 y: (1 - root.fieldsProgress) * 64
