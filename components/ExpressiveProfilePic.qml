@@ -39,7 +39,8 @@ Item {
         anchors.centerIn: parent
         implicitSize: root.implicitWidth
         shape: MaterialShape.ClamShell
-        color: root.backgroundColour
+        color: Qt.alpha(root.backgroundColour, 1)
+        opacity: root.backgroundColour.a
         layer.enabled: true
 
         Behavior on color {
