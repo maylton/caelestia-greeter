@@ -96,10 +96,16 @@ PanelWindow {
             return;
         }
 
+        const savedKey = PreferencesService.lastSessionKey;
         const currentKey = commandKey(selectedSession);
-        let index = currentKey
-            ? sessionChoices.findIndex(session => commandKey(session) === currentKey)
+        const preferredKey = savedKey || currentKey;
+        let index = preferredKey
+            ? sessionChoices.findIndex(session => commandKey(session) === preferredKey)
             : -1;
+
+        if (index < 0 && savedKey && currentKey) {
+            index = sessionChoices.findIndex(session => commandKey(session) === currentKey);
+        }
         if (index < 0)
             index = 0;
         selectedSessionIndex = index;
@@ -118,6 +124,14 @@ PanelWindow {
         }
 
         function onSessionsChanged() {
+            window.alignSessionSelection();
+        }
+    }
+
+    Connections {
+        target: PreferencesService
+
+        function onLastSessionKeyChanged() {
             window.alignSessionSelection();
         }
     }
@@ -346,7 +360,9 @@ PanelWindow {
                 }
 
                 onSelected: index => {
+                    const session = window.sessionChoices[index];
                     window.selectedSessionIndex = index;
+                    PreferencesService.rememberSession(window.commandKey(session));
                     window.openSelector = "";
                 }
             }
